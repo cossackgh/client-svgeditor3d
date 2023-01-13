@@ -1,7 +1,7 @@
 {
   "name": "svgeditor-client3d",
   "version": "0.0.1",
-  "description": "",
+  "description": "Create 3D scenes from SVG files",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "umd:main": "dist/umd/index.js",
@@ -34,27 +34,28 @@
     "dist"
   ],
   "keywords": [
-    "example",
+    "clientsvg3d",
     "typescript",
     "npm",
     "package",
-    "sample",
+    "threejs",
     "boilerplate",
     "starter",
-    "demo",
+    "visualsvg3d",
+    "svg3d",
     "cjs",
     "esm",
     "umd"
   ],
   "author": "Dmitro Yagupov <cossack_box@yahoo.com>",
   "license": "MIT",
-  "homepage": "https://github.com/cossackgh/client-svgeditor",
+  "homepage": "https://github.com/cossackgh/client-svgeditor3d",
   "repository": {
     "type": "git",
-    "url": "git@github.com:cossackgh/client-svgeditor.git"
+    "url": "https://github.com/cossackgh/client-svgeditor3d.git"
   },
   "bugs": {
-    "url": "https://github.com/cossackgh/client-svgeditor/issues"
+    "url": "https://github.com/cossackgh/client-svgeditor3d/issues"
   },
   "dependencies": {
     "three": "^0.147.0",
