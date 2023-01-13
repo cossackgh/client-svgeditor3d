@@ -860,6 +860,7 @@ export class ClientSVG3D extends Base {
     const manager = new THREE.LoadingManager();
     const loaderSVG = new SVGLoader(manager);
     const groupSVGExtrude = new THREE.Group();
+    console.log(" ### ==== #### addSVGExtrudeObject loaderSVG = > ", loaderSVG);
     groupSVGExtrude.name = options.settingsGroup?.nameGroup as string;
     groupSVGExtrude.position.z = options.settingsGroup?.positions?.z as number;
     /*groupSVGExtrude.position.set(
