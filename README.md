@@ -1,28 +1,16 @@
-# Simple Client for SVG Editor
+# Simple 3D Scene Client for SVG Editor
 
 This is a simple client for the create a SVG interactive map or schemes. It is based on SVG files with a specific structure.
 In SVG files, you can define a group of elements with a specific ID. For default use interactive layer (group in SVG) Id named => "interactive". 
 But you can use any other name. Нou must specify this name in the configuration file (For example - "interactiveLayer: 'MyInteractiveLayer'"). See "Set up Client" section.
 ## Install
-``` npm install svgeditor-simple-client```
+``` npm i svgeditor-client3d```
 ## Demo
 Use case of this library is to create a  [simple interactive map](http://svgedit.za-vod.ru/example/). 
  
 ## Use Client
 ```javascript
-import { ClientSVGEditor } from 'svgeditor-simple-client'
-```
-## OR Use Client for vanilla js
-**Download last releases version library**
-for example https://github.com/cossackgh/client-svgeditor/releases/download/v0.1.2-beta/svgeditor-simple-client-0.1.2.tgz
-unpack it. Find ```/umd``` folder. Copy ```svgeditor-simple-client.js``` to your JS folder end copy ```main.css``` to your CSS folder.
-Add to your HTML file
-
-
-```html
-<link rel="stylesheet"  href="./css/main.css" />
-    ................
-<script src="./js/svgeditor-simple-client.js"></script>
+import { ClientSVG3D } from 'svgeditor-client3d'
 ```
 ## Set up Client
 
