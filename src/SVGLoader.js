@@ -1,9 +1,20 @@
-import * as THREE from "three";
+import {
+  Box2,
+  BufferGeometry,
+  FileLoader,
+  Float32BufferAttribute,
+  Loader,
+  Matrix3,
+  Path,
+  Shape,
+  ShapePath,
+  ShapeUtils,
+  Vector2,
+  Vector3,
+} from "three";
 
-export class SVGLoader extends THREE.Loader {
-  defaultDPI: number;
-  defaultUnit: string;
-  constructor(manager: THREE.LoadingManager) {
+class SVGLoader extends Loader {
+  constructor(manager) {
     super(manager);
 
     // Default dots per inch
@@ -12,11 +23,12 @@ export class SVGLoader extends THREE.Loader {
     // Accepted units: 'mm', 'cm', 'in', 'pt', 'pc', 'px'
     this.defaultUnit = "px";
   }
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  load(url: string, onLoad: any, onProgress: any, onError: any) {
+
+  load(url, onLoad, onProgress, onError) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const scope = this;
-    const loader = new THREE.FileLoader(scope.manager);
+
+    const loader = new FileLoader(scope.manager);
     loader.setPath(scope.path);
     loader.setRequestHeader(scope.requestHeader);
     loader.setWithCredentials(scope.withCredentials);
@@ -24,7 +36,7 @@ export class SVGLoader extends THREE.Loader {
       url,
       function (text) {
         try {
-          onLoad(scope.parse("" + text));
+          onLoad(scope.parse(text));
         } catch (e) {
           if (onError) {
             onError(e);
@@ -39,73 +51,79 @@ export class SVGLoader extends THREE.Loader {
       onError
     );
   }
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  parse(text: string) {
+
+  parse(text) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const scope = this;
-    function parseNode(
-      node: any,
-      style: {
-        fill?: string;
-        fillOpacity?: number;
-        strokeOpacity?: number;
-        strokeWidth?: number;
-        strokeLineJoin?: string;
-        strokeLineCap?: string;
-        strokeMiterLimit?: number;
-      }
-    ) {
+
+    function parseNode(node, style) {
       if (node.nodeType !== 1) return;
+
       const transform = getNodeTransform(node);
+
       let isDefsNode = false;
-      let path: any;
+
+      let path = null;
+
       switch (node.nodeName) {
         case "svg":
           style = parseStyle(node, style);
           break;
+
         case "style":
           parseCSSStylesheet(node);
           break;
+
         case "g":
           style = parseStyle(node, style);
           break;
+
         case "path":
           style = parseStyle(node, style);
           if (node.hasAttribute("d")) path = parsePathNode(node);
           break;
+
         case "rect":
           style = parseStyle(node, style);
           path = parseRectNode(node);
           break;
+
         case "polygon":
           style = parseStyle(node, style);
           path = parsePolygonNode(node);
           break;
+
         case "polyline":
           style = parseStyle(node, style);
           path = parsePolylineNode(node);
           break;
+
         case "circle":
           style = parseStyle(node, style);
           path = parseCircleNode(node);
           break;
+
         case "ellipse":
           style = parseStyle(node, style);
           path = parseEllipseNode(node);
           break;
+
         case "line":
           style = parseStyle(node, style);
           path = parseLineNode(node);
           break;
+
         case "defs":
           isDefsNode = true;
           break;
+
         case "use":
           style = parseStyle(node, style);
+
           const href =
             node.getAttributeNS("http://www.w3.org/1999/xlink", "href") || "";
           const usedNodeId = href.substring(1);
-          const usedNode = node.viewportElement?.getElementById(usedNodeId);
+          const usedNode = node.viewportElement.getElementById(usedNodeId);
           if (usedNode) {
             parseNode(usedNode, style);
           } else {
@@ -116,6 +134,7 @@ export class SVGLoader extends THREE.Loader {
           }
 
           break;
+
         default:
         // console.log( node );
       }
@@ -126,16 +145,17 @@ export class SVGLoader extends THREE.Loader {
         }
 
         transformPath(path, currentTransform);
+
         paths.push(path);
-        path.userData = {
-          node: node,
-          style: style,
-        };
+
+        path.userData = { node: node, style: style };
       }
 
       const childNodes = node.childNodes;
+
       for (let i = 0; i < childNodes.length; i++) {
         const node = childNodes[i];
+
         if (
           isDefsNode &&
           node.nodeName !== "style" &&
@@ -152,6 +172,7 @@ export class SVGLoader extends THREE.Loader {
 
       if (transform) {
         transformStack.pop();
+
         if (transformStack.length > 0) {
           currentTransform.copy(transformStack[transformStack.length - 1]);
         } else {
@@ -160,36 +181,44 @@ export class SVGLoader extends THREE.Loader {
       }
     }
 
-    function parsePathNode(node: any) {
-      const path = new THREE.ShapePath();
-      const point = new THREE.Vector2();
-      const control = new THREE.Vector2();
-      const firstPoint = new THREE.Vector2();
+    function parsePathNode(node) {
+      const path = new ShapePath();
+
+      const point = new Vector2();
+      const control = new Vector2();
+
+      const firstPoint = new Vector2();
       let isFirstPoint = true;
       let doSetFirstPoint = false;
+
       const d = node.getAttribute("d");
 
       // console.log( d );
 
       const commands = d.match(/[a-df-z][^a-df-z]*/gi);
+
       for (let i = 0, l = commands.length; i < l; i++) {
         const command = commands[i];
+
         const type = command.charAt(0);
         const data = command.slice(1).trim();
+
         if (isFirstPoint === true) {
           doSetFirstPoint = true;
           isFirstPoint = false;
         }
 
         let numbers;
+
         switch (type) {
           case "M":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
             for (let j = 0, jl = numbers.length; j < jl; j += 2) {
               point.x = numbers[j + 0];
               point.y = numbers[j + 1];
               control.x = point.x;
               control.y = point.y;
+
               if (j === 0) {
                 path.moveTo(point.x, point.y);
               } else {
@@ -200,42 +229,53 @@ export class SVGLoader extends THREE.Loader {
             }
 
             break;
+
           case "H":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j++) {
               point.x = numbers[j];
               control.x = point.x;
               control.y = point.y;
               path.lineTo(point.x, point.y);
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "V":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j++) {
               point.y = numbers[j];
               control.x = point.x;
               control.y = point.y;
               path.lineTo(point.x, point.y);
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "L":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 2) {
               point.x = numbers[j + 0];
               point.y = numbers[j + 1];
               control.x = point.x;
               control.y = point.y;
               path.lineTo(point.x, point.y);
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "C":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 6) {
               path.bezierCurveTo(
                 numbers[j + 0],
@@ -249,12 +289,15 @@ export class SVGLoader extends THREE.Loader {
               control.y = numbers[j + 3];
               point.x = numbers[j + 4];
               point.y = numbers[j + 5];
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "S":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 4) {
               path.bezierCurveTo(
                 getReflection(point.x, control.x),
@@ -268,12 +311,15 @@ export class SVGLoader extends THREE.Loader {
               control.y = numbers[j + 1];
               point.x = numbers[j + 2];
               point.y = numbers[j + 3];
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "Q":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 4) {
               path.quadraticCurveTo(
                 numbers[j + 0],
@@ -285,12 +331,15 @@ export class SVGLoader extends THREE.Loader {
               control.y = numbers[j + 1];
               point.x = numbers[j + 2];
               point.y = numbers[j + 3];
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "T":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 2) {
               const rx = getReflection(point.x, control.x);
               const ry = getReflection(point.y, control.y);
@@ -299,16 +348,20 @@ export class SVGLoader extends THREE.Loader {
               control.y = ry;
               point.x = numbers[j + 0];
               point.y = numbers[j + 1];
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "A":
             numbers = parseFloats(data, [3, 4], 7);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 7) {
               // skip command if start point == end point
               if (numbers[j + 5] == point.x && numbers[j + 6] == point.y)
                 continue;
+
               const start = point.clone();
               point.x = numbers[j + 5];
               point.y = numbers[j + 6];
@@ -324,17 +377,21 @@ export class SVGLoader extends THREE.Loader {
                 start,
                 point
               );
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "m":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 2) {
               point.x += numbers[j + 0];
               point.y += numbers[j + 1];
               control.x = point.x;
               control.y = point.y;
+
               if (j === 0) {
                 path.moveTo(point.x, point.y);
               } else {
@@ -345,42 +402,53 @@ export class SVGLoader extends THREE.Loader {
             }
 
             break;
+
           case "h":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j++) {
               point.x += numbers[j];
               control.x = point.x;
               control.y = point.y;
               path.lineTo(point.x, point.y);
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "v":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j++) {
               point.y += numbers[j];
               control.x = point.x;
               control.y = point.y;
               path.lineTo(point.x, point.y);
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "l":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 2) {
               point.x += numbers[j + 0];
               point.y += numbers[j + 1];
               control.x = point.x;
               control.y = point.y;
               path.lineTo(point.x, point.y);
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "c":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 6) {
               path.bezierCurveTo(
                 point.x + numbers[j + 0],
@@ -394,12 +462,15 @@ export class SVGLoader extends THREE.Loader {
               control.y = point.y + numbers[j + 3];
               point.x += numbers[j + 4];
               point.y += numbers[j + 5];
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "s":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 4) {
               path.bezierCurveTo(
                 getReflection(point.x, control.x),
@@ -413,12 +484,15 @@ export class SVGLoader extends THREE.Loader {
               control.y = point.y + numbers[j + 1];
               point.x += numbers[j + 2];
               point.y += numbers[j + 3];
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "q":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 4) {
               path.quadraticCurveTo(
                 point.x + numbers[j + 0],
@@ -430,12 +504,15 @@ export class SVGLoader extends THREE.Loader {
               control.y = point.y + numbers[j + 1];
               point.x += numbers[j + 2];
               point.y += numbers[j + 3];
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "t":
-            numbers = parseFloats(data, [], 1);
+            numbers = parseFloats(data);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 2) {
               const rx = getReflection(point.x, control.x);
               const ry = getReflection(point.y, control.y);
@@ -449,15 +526,19 @@ export class SVGLoader extends THREE.Loader {
               control.y = ry;
               point.x = point.x + numbers[j + 0];
               point.y = point.y + numbers[j + 1];
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "a":
             numbers = parseFloats(data, [3, 4], 7);
+
             for (let j = 0, jl = numbers.length; j < jl; j += 7) {
               // skip command if no displacement
               if (numbers[j + 5] == 0 && numbers[j + 6] == 0) continue;
+
               const start = point.clone();
               point.x += numbers[j + 5];
               point.y += numbers[j + 6];
@@ -473,21 +554,25 @@ export class SVGLoader extends THREE.Loader {
                 start,
                 point
               );
+
               if (j === 0 && doSetFirstPoint === true) firstPoint.copy(point);
             }
 
             break;
+
           case "Z":
           case "z":
             path.currentPath.autoClose = true;
+
             if (path.currentPath.curves.length > 0) {
-              // Reset point to beginning of THREE.Path
+              // Reset point to beginning of Path
               point.copy(firstPoint);
               path.currentPath.currentPoint.copy(point);
               isFirstPoint = true;
             }
 
             break;
+
           default:
             console.warn(command);
         }
@@ -500,21 +585,26 @@ export class SVGLoader extends THREE.Loader {
       return path;
     }
 
-    function parseCSSStylesheet(node: any) {
+    function parseCSSStylesheet(node) {
       if (!node.sheet || !node.sheet.cssRules || !node.sheet.cssRules.length)
         return;
+
       for (let i = 0; i < node.sheet.cssRules.length; i++) {
         const stylesheet = node.sheet.cssRules[i];
+
         if (stylesheet.type !== 1) continue;
+
         const selectorList = stylesheet.selectorText
           .split(/,/gm)
           .filter(Boolean)
-          .map((i: string) => i.trim());
+          .map((i) => i.trim());
+
         for (let j = 0; j < selectorList.length; j++) {
           // Remove empty rules
           const definitions = Object.fromEntries(
             Object.entries(stylesheet.style).filter(([, v]) => v !== "")
           );
+
           stylesheets[selectorList[j]] = Object.assign(
             stylesheets[selectorList[j]] || {},
             definitions
@@ -533,14 +623,14 @@ export class SVGLoader extends THREE.Loader {
      */
 
     function parseArcCommand(
-      path: THREE.ShapePath,
-      rx: number,
-      ry: number,
-      x_axis_rotation: number,
-      large_arc_flag: any,
-      sweep_flag: number,
-      start: THREE.Vector2,
-      end: THREE.Vector2
+      path,
+      rx,
+      ry,
+      x_axis_rotation,
+      large_arc_flag,
+      sweep_flag,
+      start,
+      end
     ) {
       if (rx == 0 || ry == 0) {
         // draw a line if either of the radii == 0
@@ -570,6 +660,7 @@ export class SVGLoader extends THREE.Loader {
 
       // Ensure radii are large enough
       const cr = x1ps / rxs + y1ps / rys;
+
       if (cr > 1) {
         // scale up rx,ry equally so cr == 1
         const s = Math.sqrt(cr);
@@ -606,6 +697,7 @@ export class SVGLoader extends THREE.Loader {
           (-y1p - cyp) / ry
         ) %
         (Math.PI * 2);
+
       path.currentPath.absellipse(
         cx,
         cy,
@@ -618,7 +710,7 @@ export class SVGLoader extends THREE.Loader {
       );
     }
 
-    function svgAngle(ux: number, uy: number, vx: number, vy: number) {
+    function svgAngle(ux, uy, vx, vy) {
       const dot = ux * vx + uy * vy;
       const len = Math.sqrt(ux * ux + uy * uy) * Math.sqrt(vx * vx + vy * vy);
       let ang = Math.acos(Math.max(-1, Math.min(1, dot / len))); // floating point precision, slightly over values appear
@@ -630,7 +722,7 @@ export class SVGLoader extends THREE.Loader {
      * According to https://www.w3.org/TR/SVG/shapes.html#RectElementRXAttribute
      * rounded corner should be rendered to elliptical arc, but bezier curve does the job well enough
      */
-    function parseRectNode(node: { getAttribute: (arg0: string) => any }) {
+    function parseRectNode(node) {
       const x = parseFloatWithUnits(node.getAttribute("x") || 0);
       const y = parseFloatWithUnits(node.getAttribute("y") || 0);
       const rx = parseFloatWithUnits(
@@ -645,7 +737,8 @@ export class SVGLoader extends THREE.Loader {
       // Ellipse arc to Bezier approximation Coefficient (Inversed). See:
       // https://spencermortensen.com/articles/bezier-circle/
       const bci = 1 - 0.551915024494;
-      const path = new THREE.ShapePath();
+
+      const path = new ShapePath();
 
       // top left
       path.moveTo(x + rx, y);
@@ -698,10 +791,11 @@ export class SVGLoader extends THREE.Loader {
       return path;
     }
 
-    function parsePolygonNode(node: SVGElement) {
-      function iterator(match: any, a: any, b: any) {
+    function parsePolygonNode(node) {
+      function iterator(match, a, b) {
         const x = parseFloatWithUnits(a);
         const y = parseFloatWithUnits(b);
+
         if (index === 0) {
           path.moveTo(x, y);
         } else {
@@ -712,17 +806,23 @@ export class SVGLoader extends THREE.Loader {
       }
 
       const regex = /(-?[\d\.?]+)[,|\s](-?[\d\.?]+)/g;
-      const path = new THREE.ShapePath();
+
+      const path = new ShapePath();
+
       let index = 0;
-      node.getAttribute("points")?.replace(regex, iterator);
+
+      node.getAttribute("points").replace(regex, iterator);
+
       path.currentPath.autoClose = true;
+
       return path;
     }
 
-    function parsePolylineNode(node: SVGElement) {
-      function iterator(match: any, a: any, b: any) {
+    function parsePolylineNode(node) {
+      function iterator(match, a, b) {
         const x = parseFloatWithUnits(a);
         const y = parseFloatWithUnits(b);
+
         if (index === 0) {
           path.moveTo(x, y);
         } else {
@@ -733,80 +833,80 @@ export class SVGLoader extends THREE.Loader {
       }
 
       const regex = /(-?[\d\.?]+)[,|\s](-?[\d\.?]+)/g;
-      const path = new THREE.ShapePath();
+
+      const path = new ShapePath();
+
       let index = 0;
-      node.getAttribute("points")?.replace(regex, iterator);
+
+      node.getAttribute("points").replace(regex, iterator);
+
       path.currentPath.autoClose = false;
+
       return path;
     }
 
-    function parseCircleNode(node: SVGElement) {
-      const x = parseFloatWithUnits(node.getAttribute("cx") || "0");
-      const y = parseFloatWithUnits(node.getAttribute("cy") || "0");
-      const r = parseFloatWithUnits(node.getAttribute("r") || "0");
-      const subpath = new THREE.Path();
-      subpath.absarc(x, y, r, 0, Math.PI * 2, false);
-      const path = new THREE.ShapePath();
+    function parseCircleNode(node) {
+      const x = parseFloatWithUnits(node.getAttribute("cx") || 0);
+      const y = parseFloatWithUnits(node.getAttribute("cy") || 0);
+      const r = parseFloatWithUnits(node.getAttribute("r") || 0);
+
+      const subpath = new Path();
+      subpath.absarc(x, y, r, 0, Math.PI * 2);
+
+      const path = new ShapePath();
       path.subPaths.push(subpath);
+
       return path;
     }
 
-    function parseEllipseNode(node: SVGElement) {
-      const x = parseFloatWithUnits(node.getAttribute("cx") || "0");
-      const y = parseFloatWithUnits(node.getAttribute("cy") || "0");
-      const rx = parseFloatWithUnits(node.getAttribute("rx") || "0");
-      const ry = parseFloatWithUnits(node.getAttribute("ry") || "0");
-      const subpath = new THREE.Path();
-      subpath.absellipse(x, y, rx, ry, 0, Math.PI * 2, false, 0);
-      const path = new THREE.ShapePath();
+    function parseEllipseNode(node) {
+      const x = parseFloatWithUnits(node.getAttribute("cx") || 0);
+      const y = parseFloatWithUnits(node.getAttribute("cy") || 0);
+      const rx = parseFloatWithUnits(node.getAttribute("rx") || 0);
+      const ry = parseFloatWithUnits(node.getAttribute("ry") || 0);
+
+      const subpath = new Path();
+      subpath.absellipse(x, y, rx, ry, 0, Math.PI * 2);
+
+      const path = new ShapePath();
       path.subPaths.push(subpath);
+
       return path;
     }
 
-    function parseLineNode(node: SVGElement) {
-      const x1 = parseFloatWithUnits(node.getAttribute("x1") || "0");
-      const y1 = parseFloatWithUnits(node.getAttribute("y1") || "0");
-      const x2 = parseFloatWithUnits(node.getAttribute("x2") || "0");
-      const y2 = parseFloatWithUnits(node.getAttribute("y2") || "0");
-      const path = new THREE.ShapePath();
+    function parseLineNode(node) {
+      const x1 = parseFloatWithUnits(node.getAttribute("x1") || 0);
+      const y1 = parseFloatWithUnits(node.getAttribute("y1") || 0);
+      const x2 = parseFloatWithUnits(node.getAttribute("x2") || 0);
+      const y2 = parseFloatWithUnits(node.getAttribute("y2") || 0);
+
+      const path = new ShapePath();
       path.moveTo(x1, y1);
       path.lineTo(x2, y2);
       path.currentPath.autoClose = false;
+
       return path;
     }
 
     //
 
-    function parseStyle(
-      node: SVGElement = new SVGElement(),
-      style: {
-        [x: string]: any;
-        fill?: string | undefined;
-        fillOpacity?: number | undefined;
-        strokeOpacity?: number | undefined;
-        strokeWidth?: number | undefined;
-        strokeLineJoin?: string | undefined;
-        strokeLineCap?: string | undefined;
-        strokeMiterLimit?: number | undefined;
-      }
-    ) {
+    function parseStyle(node, style) {
       style = Object.assign({}, style); // clone style
 
-      let stylesheetStyles: { [key: string]: any } = {};
+      let stylesheetStyles = {};
+
       if (node.hasAttribute("class")) {
-        const classSelectors: string[] | undefined = node
+        const classSelectors = node
           .getAttribute("class")
-          ?.split(/\s/)
+          .split(/\s/)
           .filter(Boolean)
-          .map((i: string) => i.trim());
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (let i = 0; i < classSelectors!.length; i++) {
-          if (classSelectors !== undefined) {
-            stylesheetStyles = Object.assign(
-              stylesheetStyles,
-              stylesheets["." + classSelectors[i]]
-            );
-          }
+          .map((i) => i.trim());
+
+        for (let i = 0; i < classSelectors.length; i++) {
+          stylesheetStyles = Object.assign(
+            stylesheetStyles,
+            stylesheets["." + classSelectors[i]]
+          );
         }
       }
 
@@ -817,17 +917,14 @@ export class SVGLoader extends THREE.Loader {
         );
       }
 
-      function addStyle(
-        svgName: string | any,
-        jsName: string,
-        adjustFunction: (value: any) => any
-      ) {
+      function addStyle(svgName, jsName, adjustFunction) {
         if (adjustFunction === undefined)
-          adjustFunction = function copy(v: string) {
+          adjustFunction = function copy(v) {
             if (v.startsWith("url"))
               console.warn(
                 "SVGLoader: url access in attributes is not implemented."
               );
+
             return v;
           };
 
@@ -839,37 +936,38 @@ export class SVGLoader extends THREE.Loader {
           style[jsName] = adjustFunction(node.style[svgName]);
       }
 
-      function clamp(v: any) {
+      function clamp(v) {
         return Math.max(0, Math.min(1, parseFloatWithUnits(v)));
       }
 
-      function positive(v: any) {
+      function positive(v) {
         return Math.max(0, parseFloatWithUnits(v));
       }
 
-      addStyle("fill", "fill", clamp);
+      addStyle("fill", "fill");
       addStyle("fill-opacity", "fillOpacity", clamp);
-      addStyle("fill-rule", "fillRule", clamp);
+      addStyle("fill-rule", "fillRule");
       addStyle("opacity", "opacity", clamp);
-      addStyle("stroke", "stroke", clamp);
+      addStyle("stroke", "stroke");
       addStyle("stroke-opacity", "strokeOpacity", clamp);
       addStyle("stroke-width", "strokeWidth", positive);
-      addStyle("stroke-linejoin", "strokeLineJoin", positive);
-      addStyle("stroke-linecap", "strokeLineCap", positive);
+      addStyle("stroke-linejoin", "strokeLineJoin");
+      addStyle("stroke-linecap", "strokeLineCap");
       addStyle("stroke-miterlimit", "strokeMiterLimit", positive);
-      addStyle("visibility", "visibility", clamp);
+      addStyle("visibility", "visibility");
+
       return style;
     }
 
     // http://www.w3.org/TR/SVG11/implnote.html#PathElementImplementationNotes
 
-    function getReflection(a: number, b: number) {
+    function getReflection(a, b) {
       return a - (b - a);
     }
 
     // from https://github.com/ppvg/svg-numbers (MIT License)
 
-    function parseFloats(input: string, flags: number[] = [], stride: number) {
+    function parseFloats(input, flags, stride) {
       if (typeof input !== "string") {
         throw new TypeError("Invalid input: " + typeof input);
       }
@@ -891,21 +989,17 @@ export class SVGLoader extends THREE.Loader {
       const INT = 1;
       const FLOAT = 2;
       const EXP = 3;
+
       let state = SEP;
       let seenComma = true;
       let number = "",
         exponent = "";
-      const result: number[] = [];
-      function throwSyntaxError(
-        current: string,
-        i: string | number,
-        partial: any[]
-      ) {
+      const result = [];
+
+      function throwSyntaxError(current, i, partial) {
         const error = new SyntaxError(
           'Unexpected character "' + current + '" at index ' + i + "."
         );
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         error.partial = partial;
         throw error;
       }
@@ -922,6 +1016,7 @@ export class SVGLoader extends THREE.Loader {
 
       let current;
       const length = input.length;
+
       for (let i = 0; i < length; i++) {
         current = input[i];
 
@@ -1056,17 +1151,16 @@ export class SVGLoader extends THREE.Loader {
 
       // add the last number found (if any)
       newNumber();
+
       return result;
     }
 
     // Units
 
     const units = ["mm", "cm", "in", "pt", "pc", "px"];
-    /*     interface UnitConversion {
-      [key: string]: number;
-    } */
+
     // Conversion: [ fromUnit ][ toUnit ] (-1 means dpi dependent)
-    const unitConversion: { [key: string]: { [key: string]: number } } = {
+    const unitConversion = {
       mm: {
         mm: 1,
         cm: 0.1,
@@ -1111,11 +1205,14 @@ export class SVGLoader extends THREE.Loader {
         px: 1,
       },
     };
-    function parseFloatWithUnits(string: string) {
+
+    function parseFloatWithUnits(string) {
       let theUnit = "px";
-      if (typeof string === "string") {
+
+      if (typeof string === "string" || string instanceof String) {
         for (let i = 0, n = units.length; i < n; i++) {
           const u = units[i];
+
           if (string.endsWith(u)) {
             theUnit = u;
             string = string.substring(0, string.length - u.length);
@@ -1125,12 +1222,14 @@ export class SVGLoader extends THREE.Loader {
       }
 
       let scale = undefined;
+
       if (theUnit === "px" && scope.defaultUnit !== "px") {
         // Conversion scale from  pixels to inches, then to default units
-        const uConv = unitConversion["in"][scope.defaultUnit];
+
         scale = unitConversion["in"][scope.defaultUnit] / scope.defaultDPI;
       } else {
         scale = unitConversion[theUnit][scope.defaultUnit];
+
         if (scale < 0) {
           // Conversion scale to pixels
 
@@ -1143,7 +1242,7 @@ export class SVGLoader extends THREE.Loader {
 
     // Transforms
 
-    function getNodeTransform(node: SVGElement) {
+    function getNodeTransform(node) {
       if (
         !(
           node.hasAttribute("transform") ||
@@ -1155,48 +1254,55 @@ export class SVGLoader extends THREE.Loader {
       }
 
       const transform = parseNodeTransform(node);
+
       if (transformStack.length > 0) {
         transform.premultiply(transformStack[transformStack.length - 1]);
       }
 
       currentTransform.copy(transform);
       transformStack.push(transform);
+
       return transform;
     }
 
-    function parseNodeTransform(node: SVGElement) {
-      const transform = new THREE.Matrix3();
+    function parseNodeTransform(node) {
+      const transform = new Matrix3();
       const currentTransform = tempTransform0;
+
       if (
         node.nodeName === "use" &&
         (node.hasAttribute("x") || node.hasAttribute("y"))
       ) {
-        const tx = parseFloatWithUnits("" + node.getAttribute("x"));
-        const ty = parseFloatWithUnits("" + node.getAttribute("y"));
+        const tx = parseFloatWithUnits(node.getAttribute("x"));
+        const ty = parseFloatWithUnits(node.getAttribute("y"));
+
         transform.translate(tx, ty);
       }
 
       if (node.hasAttribute("transform")) {
-        const transformsTexts =
-          node.getAttribute("transform")?.split(")") || "";
+        const transformsTexts = node.getAttribute("transform").split(")");
+
         for (let tIndex = transformsTexts.length - 1; tIndex >= 0; tIndex--) {
           const transformText = transformsTexts[tIndex].trim();
+
           if (transformText === "") continue;
+
           const openParPos = transformText.indexOf("(");
           const closeParPos = transformText.length;
+
           if (openParPos > 0 && openParPos < closeParPos) {
             const transformType = transformText.slice(0, openParPos);
-            const array = parseFloats(
-              transformText.slice(openParPos + 1),
-              [],
-              0
-            );
+
+            const array = parseFloats(transformText.slice(openParPos + 1));
+
             currentTransform.identity();
+
             switch (transformType) {
               case "translate":
                 if (array.length >= 1) {
                   const tx = array[0];
                   let ty = 0;
+
                   if (array.length >= 2) {
                     ty = array[1];
                   }
@@ -1205,6 +1311,7 @@ export class SVGLoader extends THREE.Loader {
                 }
 
                 break;
+
               case "rotate":
                 if (array.length >= 1) {
                   let angle = 0;
@@ -1212,7 +1319,8 @@ export class SVGLoader extends THREE.Loader {
                   let cy = 0;
 
                   // Angle
-                  angle = (-array[0] * Math.PI) / 180;
+                  angle = (array[0] * Math.PI) / 180;
+
                   if (array.length >= 3) {
                     // Center x, y
                     cx = array[1];
@@ -1220,13 +1328,13 @@ export class SVGLoader extends THREE.Loader {
                   }
 
                   // Rotate around center (cx, cy)
-                  tempTransform1.identity().translate(-cx, -cy);
-                  tempTransform2.identity().rotate(angle);
+                  tempTransform1.makeTranslation(-cx, -cy);
+                  tempTransform2.makeRotation(angle);
                   tempTransform3.multiplyMatrices(
                     tempTransform2,
                     tempTransform1
                   );
-                  tempTransform1.identity().translate(cx, cy);
+                  tempTransform1.makeTranslation(cx, cy);
                   currentTransform.multiplyMatrices(
                     tempTransform1,
                     tempTransform3
@@ -1234,10 +1342,12 @@ export class SVGLoader extends THREE.Loader {
                 }
 
                 break;
+
               case "scale":
                 if (array.length >= 1) {
                   const scaleX = array[0];
                   let scaleY = scaleX;
+
                   if (array.length >= 2) {
                     scaleY = array[1];
                   }
@@ -1246,6 +1356,7 @@ export class SVGLoader extends THREE.Loader {
                 }
 
                 break;
+
               case "skewX":
                 if (array.length === 1) {
                   currentTransform.set(
@@ -1262,6 +1373,7 @@ export class SVGLoader extends THREE.Loader {
                 }
 
                 break;
+
               case "skewY":
                 if (array.length === 1) {
                   currentTransform.set(
@@ -1278,6 +1390,7 @@ export class SVGLoader extends THREE.Loader {
                 }
 
                 break;
+
               case "matrix":
                 if (array.length === 6) {
                   currentTransform.set(
@@ -1304,42 +1417,44 @@ export class SVGLoader extends THREE.Loader {
       return transform;
     }
 
-    function transformPath(path: { subPaths: any }, m: THREE.Matrix3) {
-      function transfVec2(v2: THREE.Vector2) {
+    function transformPath(path, m) {
+      function transfVec2(v2) {
         tempV3.set(v2.x, v2.y, 1).applyMatrix3(m);
+
         v2.set(tempV3.x, tempV3.y);
       }
 
-      function transfEllipseGeneric(curve: {
-        xRadius: number;
-        yRadius: number;
-        aRotation: number;
-        aEndAngle: number;
-        aStartAngle: number;
-        aClockwise: boolean;
-      }) {
+      function transfEllipseGeneric(curve) {
         // For math description see:
         // https://math.stackexchange.com/questions/4544164
 
         const a = curve.xRadius;
         const b = curve.yRadius;
+
         const cosTheta = Math.cos(curve.aRotation);
         const sinTheta = Math.sin(curve.aRotation);
-        const v1 = new THREE.Vector3(a * cosTheta, a * sinTheta, 0);
-        const v2 = new THREE.Vector3(-b * sinTheta, b * cosTheta, 0);
+
+        const v1 = new Vector3(a * cosTheta, a * sinTheta, 0);
+        const v2 = new Vector3(-b * sinTheta, b * cosTheta, 0);
+
         const f1 = v1.applyMatrix3(m);
         const f2 = v2.applyMatrix3(m);
+
         const mF = tempTransform0.set(f1.x, f2.x, 0, f1.y, f2.y, 0, 0, 0, 1);
+
         const mFInv = tempTransform1.copy(mF).invert();
         const mFInvT = tempTransform2.copy(mFInv).transpose();
         const mQ = mFInvT.multiply(mFInv);
         const mQe = mQ.elements;
+
         const ed = eigenDecomposition(mQe[0], mQe[1], mQe[4]);
         const rt1sqrt = Math.sqrt(ed.rt1);
         const rt2sqrt = Math.sqrt(ed.rt2);
+
         curve.xRadius = 1 / rt1sqrt;
         curve.yRadius = 1 / rt2sqrt;
         curve.aRotation = Math.atan2(ed.sn, ed.cs);
+
         const isFullEllipse =
           (curve.aEndAngle - curve.aStartAngle) % (2 * Math.PI) <
           Number.EPSILON;
@@ -1359,6 +1474,7 @@ export class SVGLoader extends THREE.Loader {
             0,
             1
           );
+
           const mRT = tempTransform2.set(
             ed.cs,
             ed.sn,
@@ -1370,37 +1486,35 @@ export class SVGLoader extends THREE.Loader {
             0,
             1
           );
+
           const mDRF = mDsqrt.multiply(mRT).multiply(mF);
-          const transformAngle = (phi: number) => {
-            const { x: cosR, y: sinR } = new THREE.Vector3(
+
+          const transformAngle = (phi) => {
+            const { x: cosR, y: sinR } = new Vector3(
               Math.cos(phi),
               Math.sin(phi),
               0
             ).applyMatrix3(mDRF);
+
             return Math.atan2(sinR, cosR);
           };
 
           curve.aStartAngle = transformAngle(curve.aStartAngle);
           curve.aEndAngle = transformAngle(curve.aEndAngle);
+
           if (isTransformFlipped(m)) {
             curve.aClockwise = !curve.aClockwise;
           }
         }
       }
 
-      function transfEllipseNoSkew(curve: {
-        xRadius: number;
-        yRadius: number;
-        aRotation: number;
-        aStartAngle: number;
-        aEndAngle: number;
-        aClockwise: boolean;
-      }) {
+      function transfEllipseNoSkew(curve) {
         // Faster shortcut if no skew is applied
         // (e.g, a euclidean transform of a group containing the ellipse)
 
         const sx = getTransformScaleX(m);
         const sy = getTransformScaleY(m);
+
         curve.xRadius *= sx;
         curve.yRadius *= sy;
 
@@ -1415,7 +1529,9 @@ export class SVGLoader extends THREE.Loader {
           sx > Number.EPSILON
             ? Math.atan2(m.elements[1], m.elements[0])
             : Math.atan2(-m.elements[3], m.elements[4]);
+
         curve.aRotation += theta;
+
         if (isTransformFlipped(m)) {
           curve.aStartAngle *= -1;
           curve.aEndAngle *= -1;
@@ -1424,11 +1540,14 @@ export class SVGLoader extends THREE.Loader {
       }
 
       const subPaths = path.subPaths;
+
       for (let i = 0, n = subPaths.length; i < n; i++) {
         const subPath = subPaths[i];
         const curves = subPath.curves;
+
         for (let j = 0; j < curves.length; j++) {
           const curve = curves[j];
+
           if (curve.isLineCurve) {
             transfVec2(curve.v1);
             transfVec2(curve.v2);
@@ -1461,28 +1580,30 @@ export class SVGLoader extends THREE.Loader {
       }
     }
 
-    function isTransformFlipped(m: { elements: any }) {
+    function isTransformFlipped(m) {
       const te = m.elements;
       return te[0] * te[4] - te[1] * te[3] < 0;
     }
 
-    function isTransformSkewed(m: { elements: any }) {
+    function isTransformSkewed(m) {
       const te = m.elements;
       const basisDot = te[0] * te[3] + te[1] * te[4];
 
       // Shortcut for trivial rotations and transformations
       if (basisDot === 0) return false;
+
       const sx = getTransformScaleX(m);
       const sy = getTransformScaleY(m);
+
       return Math.abs(basisDot / (sx * sy)) > Number.EPSILON;
     }
 
-    function getTransformScaleX(m: { elements: any }) {
+    function getTransformScaleX(m) {
       const te = m.elements;
       return Math.sqrt(te[0] * te[0] + te[1] * te[1]);
     }
 
-    function getTransformScaleY(m: { elements: any }) {
+    function getTransformScaleY(m) {
       const te = m.elements;
       return Math.sqrt(te[3] * te[3] + te[4] * te[4]);
     }
@@ -1497,15 +1618,12 @@ export class SVGLoader extends THREE.Loader {
     //
     // Adapted from: https://www.mpi-hd.mpg.de/personalhomes/globes/3x3/index.html
     // -> Algorithms for real symmetric matrices -> Analytical (2x2 symmetric)
-    function eigenDecomposition(A: number, B: number, C: number) {
-      let rt1 = 0,
-        rt2: number,
-        cs: number,
-        sn: number,
-        t: number;
+    function eigenDecomposition(A, B, C) {
+      let rt1, rt2, cs, sn, t;
       const sm = A + C;
       const df = A - C;
       const rt = Math.sqrt(df * df + 4 * B * B);
+
       if (sm > 0) {
         rt1 = 0.5 * (sm + rt);
         t = 1 / rt1;
@@ -1546,26 +1664,25 @@ export class SVGLoader extends THREE.Loader {
         sn = t;
       }
 
-      return {
-        rt1,
-        rt2,
-        cs,
-        sn,
-      };
+      return { rt1, rt2, cs, sn };
     }
 
     //
 
-    const paths: any[] = [];
-    const stylesheets: { [key: string]: any } = {};
-    const transformStack: any[] = [];
-    const tempTransform0 = new THREE.Matrix3();
-    const tempTransform1 = new THREE.Matrix3();
-    const tempTransform2 = new THREE.Matrix3();
-    const tempTransform3 = new THREE.Matrix3();
-    const tempV2 = new THREE.Vector2();
-    const tempV3 = new THREE.Vector3();
-    const currentTransform = new THREE.Matrix3();
+    const paths = [];
+    const stylesheets = {};
+
+    const transformStack = [];
+
+    const tempTransform0 = new Matrix3();
+    const tempTransform1 = new Matrix3();
+    const tempTransform2 = new Matrix3();
+    const tempTransform3 = new Matrix3();
+    const tempV2 = new Vector2();
+    const tempV3 = new Vector3();
+
+    const currentTransform = new Matrix3();
+
     const xml = new DOMParser().parseFromString(text, "image/svg+xml"); // application/xml
 
     parseNode(xml.documentElement, {
@@ -1577,22 +1694,19 @@ export class SVGLoader extends THREE.Loader {
       strokeLineCap: "butt",
       strokeMiterLimit: 4,
     });
-    const data = {
-      paths: paths,
-      xml: xml.documentElement,
-    };
+
+    const data = { paths: paths, xml: xml.documentElement };
 
     // console.log( paths );
     return data;
   }
-  static createShapes(shapePath: {
-    subPaths: any[];
-    userData: { style: { fillRule: any } };
-  }) {
+
+  static createShapes(shapePath) {
     // Param shapePath: a shapepath as returned by the parse function of this class
-    // Returns THREE.Shape object
+    // Returns Shape object
 
     const BIGNUMBER = 999999999;
+
     const IntersectionLocationType = {
       ORIGIN: 0,
       DESTINATION: 1,
@@ -1602,16 +1716,13 @@ export class SVGLoader extends THREE.Loader {
       BEHIND: 5,
       BEYOND: 6,
     };
+
     const classifyResult = {
       loc: IntersectionLocationType.ORIGIN,
       t: 0,
     };
-    function findEdgeIntersection(
-      a0: { x: number; y: number },
-      a1: { x: number; y: number },
-      b0: { x: number; y: number },
-      b1: { x: number; y: number }
-    ) {
+
+    function findEdgeIntersection(a0, a1, b0, b1) {
       const x1 = a0.x;
       const x2 = a1.x;
       const x3 = b0.x;
@@ -1625,6 +1736,7 @@ export class SVGLoader extends THREE.Loader {
       const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
       const t1 = nom1 / denom;
       const t2 = nom2 / denom;
+
       if (
         (denom === 0 && nom1 !== 0) ||
         t1 <= 0 ||
@@ -1644,19 +1756,11 @@ export class SVGLoader extends THREE.Loader {
           //find position of this endpoints relatively to edge1
           if (classifyResult.loc == IntersectionLocationType.ORIGIN) {
             const point = i === 0 ? b0 : b1;
-            return {
-              x: point.x,
-              y: point.y,
-              t: classifyResult.t,
-            };
+            return { x: point.x, y: point.y, t: classifyResult.t };
           } else if (classifyResult.loc == IntersectionLocationType.BETWEEN) {
             const x = +(x1 + classifyResult.t * (x2 - x1)).toPrecision(10);
             const y = +(y1 + classifyResult.t * (y2 - y1)).toPrecision(10);
-            return {
-              x: x,
-              y: y,
-              t: classifyResult.t,
-            };
+            return { x: x, y: y, t: classifyResult.t };
           }
         }
 
@@ -1666,36 +1770,26 @@ export class SVGLoader extends THREE.Loader {
 
         for (let i = 0; i < 2; i++) {
           classifyPoint(i === 0 ? b0 : b1, a0, a1);
+
           if (classifyResult.loc == IntersectionLocationType.ORIGIN) {
             const point = i === 0 ? b0 : b1;
-            return {
-              x: point.x,
-              y: point.y,
-              t: classifyResult.t,
-            };
+            return { x: point.x, y: point.y, t: classifyResult.t };
           }
         }
 
         const x = +(x1 + t1 * (x2 - x1)).toPrecision(10);
         const y = +(y1 + t1 * (y2 - y1)).toPrecision(10);
-        return {
-          x: x,
-          y: y,
-          t: t1,
-        };
+        return { x: x, y: y, t: t1 };
       }
     }
 
-    function classifyPoint(
-      p: { x: number; y: number },
-      edgeStart: { x: number; y: number },
-      edgeEnd: { x: number; y: number }
-    ) {
+    function classifyPoint(p, edgeStart, edgeEnd) {
       const ax = edgeEnd.x - edgeStart.x;
       const ay = edgeEnd.y - edgeStart.y;
       const bx = p.x - edgeStart.x;
       const by = p.y - edgeStart.y;
       const sa = ax * by - bx * ay;
+
       if (p.x === edgeStart.x && p.y === edgeStart.y) {
         classifyResult.loc = IntersectionLocationType.ORIGIN;
         classifyResult.t = 0;
@@ -1729,6 +1823,7 @@ export class SVGLoader extends THREE.Loader {
       }
 
       let t;
+
       if (ax !== 0) {
         t = bx / ax;
       } else {
@@ -1739,21 +1834,25 @@ export class SVGLoader extends THREE.Loader {
       classifyResult.t = t;
     }
 
-    function getIntersections(path1: string | any[], path2: string | any[]) {
+    function getIntersections(path1, path2) {
       const intersectionsRaw = [];
       const intersections = [];
+
       for (let index = 1; index < path1.length; index++) {
         const path1EdgeStart = path1[index - 1];
         const path1EdgeEnd = path1[index];
+
         for (let index2 = 1; index2 < path2.length; index2++) {
           const path2EdgeStart = path2[index2 - 1];
           const path2EdgeEnd = path2[index2];
+
           const intersection = findEdgeIntersection(
             path1EdgeStart,
             path1EdgeEnd,
             path2EdgeStart,
             path2EdgeEnd
           );
+
           if (
             intersection !== null &&
             intersectionsRaw.find(
@@ -1763,9 +1862,7 @@ export class SVGLoader extends THREE.Loader {
             ) === undefined
           ) {
             intersectionsRaw.push(intersection);
-            intersections.push(
-              new THREE.Vector2(intersection.x, intersection.y)
-            );
+            intersections.push(new Vector2(intersection.x, intersection.y));
           }
         }
       }
@@ -1773,73 +1870,68 @@ export class SVGLoader extends THREE.Loader {
       return intersections;
     }
 
-    function getScanlineIntersections(
-      scanline: THREE.Vector2[],
-      boundingBox: { getCenter: (arg0: THREE.Vector2) => void },
-      paths: any[]
-    ) {
-      const center = new THREE.Vector2();
+    function getScanlineIntersections(scanline, boundingBox, paths) {
+      const center = new Vector2();
       boundingBox.getCenter(center);
-      const allIntersections: {
-        identifier: any;
-        isCW: any;
-        point: THREE.Vector2;
-      }[] = [];
-      paths.forEach(
-        (path: {
-          boundingBox: { containsPoint: (arg0: THREE.Vector2) => any };
-          points: any;
-          identifier: any;
-          isCW: any;
-        }) => {
-          // check if the center of the bounding box is in the bounding box of the paths.
-          // this is a pruning method to limit the search of intersections in paths that can't envelop of the current path.
-          // if a path envelops another path. The center of that oter path, has to be inside the bounding box of the enveloping path.
-          if (path.boundingBox.containsPoint(center)) {
-            const intersections = getIntersections(scanline, path.points);
-            intersections.forEach((p) => {
-              allIntersections.push({
-                identifier: path.identifier,
-                isCW: path.isCW,
-                point: p,
-              });
+
+      const allIntersections = [];
+
+      paths.forEach((path) => {
+        // check if the center of the bounding box is in the bounding box of the paths.
+        // this is a pruning method to limit the search of intersections in paths that can't envelop of the current path.
+        // if a path envelops another path. The center of that oter path, has to be inside the bounding box of the enveloping path.
+        if (path.boundingBox.containsPoint(center)) {
+          const intersections = getIntersections(scanline, path.points);
+
+          intersections.forEach((p) => {
+            allIntersections.push({
+              identifier: path.identifier,
+              isCW: path.isCW,
+              point: p,
             });
-          }
+          });
         }
-      );
+      });
+
       allIntersections.sort((i1, i2) => {
         return i1.point.x - i2.point.x;
       });
+
       return allIntersections;
     }
 
     function isHoleTo(
-      simplePath: any,
-      allPaths: any,
-      scanlineMinX: number | undefined,
-      scanlineMaxX: number | undefined,
-      _fillRule: string | null | undefined
+      simplePath,
+      allPaths,
+      scanlineMinX,
+      scanlineMaxX,
+      _fillRule
     ) {
       if (_fillRule === null || _fillRule === undefined || _fillRule === "") {
         _fillRule = "nonzero";
       }
 
-      const centerBoundingBox = new THREE.Vector2();
+      const centerBoundingBox = new Vector2();
       simplePath.boundingBox.getCenter(centerBoundingBox);
+
       const scanline = [
-        new THREE.Vector2(scanlineMinX, centerBoundingBox.y),
-        new THREE.Vector2(scanlineMaxX, centerBoundingBox.y),
+        new Vector2(scanlineMinX, centerBoundingBox.y),
+        new Vector2(scanlineMaxX, centerBoundingBox.y),
       ];
+
       const scanlineIntersections = getScanlineIntersections(
         scanline,
         simplePath.boundingBox,
         allPaths
       );
+
       scanlineIntersections.sort((i1, i2) => {
         return i1.point.x - i2.point.x;
       });
-      const baseIntersections: any[] = [];
-      const otherIntersections: any[] = [];
+
+      const baseIntersections = [];
+      const otherIntersections = [];
+
       scanlineIntersections.forEach((i) => {
         if (i.identifier === simplePath.identifier) {
           baseIntersections.push(i);
@@ -1847,11 +1939,13 @@ export class SVGLoader extends THREE.Loader {
           otherIntersections.push(i);
         }
       });
+
       const firstXOfPath = baseIntersections[0].point.x;
 
       // build up the path hierarchy
       const stack = [];
       let i = 0;
+
       while (
         i < otherIntersections.length &&
         otherIntersections[i].point.x < firstXOfPath
@@ -1869,9 +1963,11 @@ export class SVGLoader extends THREE.Loader {
       }
 
       stack.push(simplePath.identifier);
+
       if (_fillRule === "evenodd") {
         const isHole = stack.length % 2 === 0 ? true : false;
         const isHoleFor = stack[stack.length - 2];
+
         return {
           identifier: simplePath.identifier,
           isHole: isHole,
@@ -1882,6 +1978,7 @@ export class SVGLoader extends THREE.Loader {
         let isHole = true;
         let isHoleFor = null;
         let lastCWValue = null;
+
         for (let i = 0; i < stack.length; i++) {
           const identifier = stack[i];
           if (isHole) {
@@ -1914,64 +2011,61 @@ export class SVGLoader extends THREE.Loader {
 
     // prepare paths for hole detection
     let identifier = 0;
+
     let scanlineMinX = BIGNUMBER;
     let scanlineMaxX = -BIGNUMBER;
-    let simplePaths: { [key: string]: any } = shapePath.subPaths.map(
-      (p: { getPoints: () => any; curves: any }) => {
-        const points = p.getPoints();
-        let maxY = -BIGNUMBER;
-        let minY = BIGNUMBER;
-        let maxX = -BIGNUMBER;
-        let minX = BIGNUMBER;
 
-        //points.forEach(p => p.y *= -1);
+    let simplePaths = shapePath.subPaths.map((p) => {
+      const points = p.getPoints();
+      let maxY = -BIGNUMBER;
+      let minY = BIGNUMBER;
+      let maxX = -BIGNUMBER;
+      let minX = BIGNUMBER;
 
-        for (let i = 0; i < points.length; i++) {
-          const p = points[i];
-          if (p.y > maxY) {
-            maxY = p.y;
-          }
+      //points.forEach(p => p.y *= -1);
 
-          if (p.y < minY) {
-            minY = p.y;
-          }
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i];
 
-          if (p.x > maxX) {
-            maxX = p.x;
-          }
-
-          if (p.x < minX) {
-            minX = p.x;
-          }
+        if (p.y > maxY) {
+          maxY = p.y;
         }
 
-        //
-        if (scanlineMaxX <= maxX) {
-          scanlineMaxX = maxX + 1;
+        if (p.y < minY) {
+          minY = p.y;
         }
 
-        if (scanlineMinX >= minX) {
-          scanlineMinX = minX - 1;
+        if (p.x > maxX) {
+          maxX = p.x;
         }
 
-        return {
-          curves: p.curves,
-          points: points,
-          isCW: THREE.ShapeUtils.isClockWise(points),
-          identifier: identifier++,
-          boundingBox: new THREE.Box2(
-            new THREE.Vector2(minX, minY),
-            new THREE.Vector2(maxX, maxY)
-          ),
-        };
+        if (p.x < minX) {
+          minX = p.x;
+        }
       }
-    );
-    simplePaths = simplePaths.filter(
-      (sp: { points: string | any[] }) => sp.points.length > 1
-    );
+
+      //
+      if (scanlineMaxX <= maxX) {
+        scanlineMaxX = maxX + 1;
+      }
+
+      if (scanlineMinX >= minX) {
+        scanlineMinX = minX - 1;
+      }
+
+      return {
+        curves: p.curves,
+        points: points,
+        isCW: ShapeUtils.isClockWise(points),
+        identifier: identifier++,
+        boundingBox: new Box2(new Vector2(minX, minY), new Vector2(maxX, maxY)),
+      };
+    });
+
+    simplePaths = simplePaths.filter((sp) => sp.points.length > 1);
 
     // check if path is solid or a hole
-    const isAHole: { [key: string]: any } = simplePaths.map((p: any) =>
+    const isAHole = simplePaths.map((p) =>
       isHoleTo(
         p,
         simplePaths,
@@ -1980,38 +2074,29 @@ export class SVGLoader extends THREE.Loader {
         shapePath.userData?.style.fillRule
       )
     );
-    const shapesToReturn: THREE.Shape[] = [];
-    simplePaths.forEach(
-      (p: {
-        identifier: string | number;
-        curves: THREE.Curve<THREE.Vector2>[];
-      }) => {
-        const amIAHole = isAHole[p.identifier];
-        if (!amIAHole.isHole) {
-          const shape = new THREE.Shape();
-          shape.curves = p.curves;
-          const holes = isAHole.filter(
-            (h: { isHole: any; for: any }) => h.isHole && h.for === p.identifier
-          );
-          holes.forEach((h: { identifier: string | number }) => {
-            const hole = simplePaths[h.identifier];
-            const path = new THREE.Path();
-            path.curves = hole.curves;
-            shape.holes.push(path);
-          });
-          shapesToReturn.push(shape);
-        }
+
+    const shapesToReturn = [];
+    simplePaths.forEach((p) => {
+      const amIAHole = isAHole[p.identifier];
+
+      if (!amIAHole.isHole) {
+        const shape = new Shape();
+        shape.curves = p.curves;
+        const holes = isAHole.filter((h) => h.isHole && h.for === p.identifier);
+        holes.forEach((h) => {
+          const hole = simplePaths[h.identifier];
+          const path = new Path();
+          path.curves = hole.curves;
+          shape.holes.push(path);
+        });
+        shapesToReturn.push(shape);
       }
-    );
+    });
+
     return shapesToReturn;
   }
-  static getStrokeStyle(
-    width: any,
-    color: any,
-    lineJoin: any,
-    lineCap: any,
-    miterLimit: any
-  ) {
+
+  static getStrokeStyle(width, color, lineJoin, lineCap, miterLimit) {
     // Param width: Stroke width
     // Param color: As returned by THREE.Color.getStyle()
     // Param lineJoin: One of "round", "bevel", "miter" or "miter-limit"
@@ -2024,6 +2109,7 @@ export class SVGLoader extends THREE.Loader {
     lineJoin = lineJoin !== undefined ? lineJoin : "miter";
     lineCap = lineCap !== undefined ? lineCap : "butt";
     miterLimit = miterLimit !== undefined ? miterLimit : 4;
+
     return {
       strokeColor: color,
       strokeWidth: width,
@@ -2032,23 +2118,20 @@ export class SVGLoader extends THREE.Loader {
       strokeMiterLimit: miterLimit,
     };
   }
-  static pointsToStroke(
-    points: any,
-    style: any,
-    arcDivisions: any,
-    minDistance: number
-  ) {
+
+  static pointsToStroke(points, style, arcDivisions, minDistance) {
     // Generates a stroke with some witdh around the given path.
     // The path can be open or closed (last point equals to first point)
     // Param points: Array of Vector2D (the path). Minimum 2 points.
     // Param style: Object with SVG properties as returned by SVGLoader.getStrokeStyle(), or SVGLoader.parse() in the path.userData.style object
     // Params arcDivisions: Arc divisions for round joins and endcaps. (Optional)
     // Param minDistance: Points closer to this distance will be merged. (Optional)
-    // Returns THREE.BufferGeometry with stroke triangles (In plane z = 0). UV coordinates are generated ('u' along path. 'v' across it, from left to right)
-    type ISomeType = { [key: string]: any };
-    const vertices: any[] = [];
-    const normals: any[] = [];
-    const uvs: any[] = [];
+    // Returns BufferGeometry with stroke triangles (In plane z = 0). UV coordinates are generated ('u' along path. 'v' across it, from left to right)
+
+    const vertices = [];
+    const normals = [];
+    const uvs = [];
+
     if (
       SVGLoader.pointsToStrokeWithBuffers(
         points,
@@ -2057,39 +2140,29 @@ export class SVGLoader extends THREE.Loader {
         minDistance,
         vertices,
         normals,
-        uvs,
-        0
+        uvs
       ) === 0
     ) {
       return null;
     }
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(vertices, 3)
-    );
-    geometry.setAttribute(
-      "normal",
-      new THREE.Float32BufferAttribute(normals, 3)
-    );
-    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    const geometry = new BufferGeometry();
+    geometry.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+    geometry.setAttribute("normal", new Float32BufferAttribute(normals, 3));
+    geometry.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+
     return geometry;
   }
+
   static pointsToStrokeWithBuffers(
-    points: string | any[],
-    style: {
-      strokeWidth: number;
-      strokeLineJoin: string;
-      strokeMiterLimit: number;
-      strokeLineCap: any;
-    },
-    arcDivisions: number | undefined,
-    minDistance: number,
-    vertices: any[],
-    normals: any[],
-    uvs: any[],
-    vertexOffset: number | undefined
+    points,
+    style,
+    arcDivisions,
+    minDistance,
+    vertices,
+    normals,
+    uvs,
+    vertexOffset
   ) {
     // This function can be called to update existing arrays or buffers.
     // Accepts same parameters as pointsToStroke, plus the buffers and optional offset.
@@ -2098,43 +2171,52 @@ export class SVGLoader extends THREE.Loader {
     // if 'vertices' parameter is undefined no triangles will be generated, but the returned vertices count will still be valid (useful to preallocate the buffers)
     // 'normals' and 'uvs' buffers are optional
 
-    const tempV2_1 = new THREE.Vector2();
-    const tempV2_2 = new THREE.Vector2();
-    const tempV2_3 = new THREE.Vector2();
-    const tempV2_4 = new THREE.Vector2();
-    const tempV2_5 = new THREE.Vector2();
-    const tempV2_6 = new THREE.Vector2();
-    const tempV2_7 = new THREE.Vector2();
-    const lastPointL = new THREE.Vector2();
-    const lastPointR = new THREE.Vector2();
-    const point0L = new THREE.Vector2();
-    const point0R = new THREE.Vector2();
-    let currentPoint = new THREE.Vector2();
-    const currentPointL = new THREE.Vector2();
-    const currentPointR = new THREE.Vector2();
-    const nextPointL = new THREE.Vector2();
-    const nextPointR = new THREE.Vector2();
-    const innerPoint = new THREE.Vector2();
-    const outerPoint = new THREE.Vector2();
+    const tempV2_1 = new Vector2();
+    const tempV2_2 = new Vector2();
+    const tempV2_3 = new Vector2();
+    const tempV2_4 = new Vector2();
+    const tempV2_5 = new Vector2();
+    const tempV2_6 = new Vector2();
+    const tempV2_7 = new Vector2();
+    const lastPointL = new Vector2();
+    const lastPointR = new Vector2();
+    const point0L = new Vector2();
+    const point0R = new Vector2();
+    const currentPointL = new Vector2();
+    const currentPointR = new Vector2();
+    const nextPointL = new Vector2();
+    const nextPointR = new Vector2();
+    const innerPoint = new Vector2();
+    const outerPoint = new Vector2();
+
     arcDivisions = arcDivisions !== undefined ? arcDivisions : 12;
     minDistance = minDistance !== undefined ? minDistance : 0.001;
     vertexOffset = vertexOffset !== undefined ? vertexOffset : 0;
 
     // First ensure there are no duplicated points
     points = removeDuplicatedPoints(points);
+
     const numPoints = points.length;
+
     if (numPoints < 2) return 0;
+
     const isClosed = points[0].equals(points[numPoints - 1]);
+
+    let currentPoint;
     let previousPoint = points[0];
     let nextPoint;
+
     const strokeWidth2 = style.strokeWidth / 2;
+
     const deltaU = 1 / (numPoints - 1);
     let u0 = 0,
-      u1 = 0;
+      u1;
+
     let innerSideModified;
     let joinIsOnLeftSide;
     let isMiter;
     let initialJoinIsOnLeftSide = false;
+
     let numVertices = 0;
     let currentCoordinate = vertexOffset * 3;
     let currentCoordinateUV = vertexOffset * 2;
@@ -2145,6 +2227,7 @@ export class SVGLoader extends THREE.Loader {
     lastPointR.copy(points[0]).add(tempV2_1);
     point0L.copy(lastPointL);
     point0R.copy(lastPointR);
+
     for (let iPoint = 1; iPoint < numPoints; iPoint++) {
       currentPoint = points[iPoint];
 
@@ -2161,17 +2244,23 @@ export class SVGLoader extends THREE.Loader {
       // Normal of previous segment in tempV2_1
       const normal1 = tempV2_1;
       getNormal(previousPoint, currentPoint, normal1);
+
       tempV2_3.copy(normal1).multiplyScalar(strokeWidth2);
       currentPointL.copy(currentPoint).sub(tempV2_3);
       currentPointR.copy(currentPoint).add(tempV2_3);
+
       u1 = u0 + deltaU;
+
       innerSideModified = false;
+
       if (nextPoint !== undefined) {
         // Normal of next segment in tempV2_2
         getNormal(currentPoint, nextPoint, tempV2_2);
+
         tempV2_3.copy(tempV2_2).multiplyScalar(strokeWidth2);
         nextPointL.copy(currentPoint).sub(tempV2_3);
         nextPointR.copy(currentPoint).add(tempV2_3);
+
         joinIsOnLeftSide = true;
         tempV2_3.subVectors(nextPoint, previousPoint);
         if (normal1.dot(tempV2_3) < 0) {
@@ -2179,6 +2268,7 @@ export class SVGLoader extends THREE.Loader {
         }
 
         if (iPoint === 1) initialJoinIsOnLeftSide = joinIsOnLeftSide;
+
         tempV2_3.subVectors(nextPoint, currentPoint);
         tempV2_3.normalize();
         const dot = Math.abs(normal1.dot(tempV2_3));
@@ -2207,7 +2297,9 @@ export class SVGLoader extends THREE.Loader {
 
           outerPoint.copy(tempV2_5).add(currentPoint);
           innerPoint.add(currentPoint);
+
           isMiter = false;
+
           if (innerSideModified) {
             if (joinIsOnLeftSide) {
               nextPointR.copy(innerPoint);
@@ -2225,7 +2317,9 @@ export class SVGLoader extends THREE.Loader {
           switch (style.strokeLineJoin) {
             case "bevel":
               makeSegmentWithBevelJoin(joinIsOnLeftSide, innerSideModified, u1);
+
               break;
+
             case "round":
               // Segment triangles
 
@@ -2255,11 +2349,13 @@ export class SVGLoader extends THREE.Loader {
               }
 
               break;
+
             case "miter":
             case "miter-clip":
             default:
               const miterFraction =
                 (strokeWidth2 * style.strokeMiterLimit) / miterLength2;
+
               if (miterFraction < 1) {
                 // The join miter length exceeds the miter limit
 
@@ -2289,12 +2385,15 @@ export class SVGLoader extends THREE.Loader {
                       .subVectors(outerPoint, nextPointL)
                       .multiplyScalar(miterFraction)
                       .add(nextPointL);
+
                     addVertex(currentPointL, u1, 0);
                     addVertex(tempV2_6, u1, 0);
                     addVertex(currentPoint, u1, 0.5);
+
                     addVertex(currentPoint, u1, 0.5);
                     addVertex(tempV2_6, u1, 0);
                     addVertex(tempV2_7, u1, 0);
+
                     addVertex(currentPoint, u1, 0.5);
                     addVertex(tempV2_7, u1, 0);
                     addVertex(nextPointL, u1, 0);
@@ -2307,12 +2406,15 @@ export class SVGLoader extends THREE.Loader {
                       .subVectors(outerPoint, nextPointR)
                       .multiplyScalar(miterFraction)
                       .add(nextPointR);
+
                     addVertex(currentPointR, u1, 1);
                     addVertex(tempV2_6, u1, 1);
                     addVertex(currentPoint, u1, 0.5);
+
                     addVertex(currentPoint, u1, 0.5);
                     addVertex(tempV2_6, u1, 1);
                     addVertex(tempV2_7, u1, 1);
+
                     addVertex(currentPoint, u1, 0.5);
                     addVertex(tempV2_7, u1, 1);
                     addVertex(nextPointR, u1, 1);
@@ -2328,6 +2430,7 @@ export class SVGLoader extends THREE.Loader {
                     addVertex(lastPointR, u0, 1);
                     addVertex(lastPointL, u0, 0);
                     addVertex(outerPoint, u1, 0);
+
                     addVertex(lastPointR, u0, 1);
                     addVertex(outerPoint, u1, 0);
                     addVertex(innerPoint, u1, 1);
@@ -2335,6 +2438,7 @@ export class SVGLoader extends THREE.Loader {
                     addVertex(lastPointR, u0, 1);
                     addVertex(lastPointL, u0, 0);
                     addVertex(outerPoint, u1, 1);
+
                     addVertex(lastPointL, u0, 0);
                     addVertex(innerPoint, u1, 0);
                     addVertex(outerPoint, u1, 1);
@@ -2352,6 +2456,7 @@ export class SVGLoader extends THREE.Loader {
                     addVertex(currentPointL, u1, 0);
                     addVertex(outerPoint, u1, 0);
                     addVertex(currentPoint, u1, 0.5);
+
                     addVertex(currentPoint, u1, 0.5);
                     addVertex(outerPoint, u1, 0);
                     addVertex(nextPointL, u1, 0);
@@ -2359,6 +2464,7 @@ export class SVGLoader extends THREE.Loader {
                     addVertex(currentPointR, u1, 1);
                     addVertex(outerPoint, u1, 1);
                     addVertex(currentPoint, u1, 0.5);
+
                     addVertex(currentPoint, u1, 0.5);
                     addVertex(outerPoint, u1, 1);
                     addVertex(nextPointR, u1, 1);
@@ -2389,7 +2495,9 @@ export class SVGLoader extends THREE.Loader {
       // Increment loop variables
 
       u0 = u1;
+
       previousPoint = currentPoint;
+
       lastPointL.copy(nextPointL);
       lastPointR.copy(nextPointR);
     }
@@ -2409,6 +2517,7 @@ export class SVGLoader extends THREE.Loader {
 
       let lastOuter = outerPoint;
       let lastInner = innerPoint;
+
       if (initialJoinIsOnLeftSide !== joinIsOnLeftSide) {
         lastOuter = innerPoint;
         lastInner = outerPoint;
@@ -2418,6 +2527,7 @@ export class SVGLoader extends THREE.Loader {
         if (isMiter || initialJoinIsOnLeftSide) {
           lastInner.toArray(vertices, 0 * 3);
           lastInner.toArray(vertices, 3 * 3);
+
           if (isMiter) {
             lastOuter.toArray(vertices, 1 * 3);
           }
@@ -2426,6 +2536,7 @@ export class SVGLoader extends THREE.Loader {
         if (isMiter || !initialJoinIsOnLeftSide) {
           lastInner.toArray(vertices, 1 * 3);
           lastInner.toArray(vertices, 3 * 3);
+
           if (isMiter) {
             lastOuter.toArray(vertices, 0 * 3);
           }
@@ -2439,16 +2550,17 @@ export class SVGLoader extends THREE.Loader {
 
     // -- Functions
 
-    function getNormal(p1: any, p2: any, result: THREE.Vector2) {
+    function getNormal(p1, p2, result) {
       result.subVectors(p2, p1);
       return result.set(-result.y, result.x).normalize();
     }
 
-    function addVertex(position: THREE.Vector2, u: number, v: number) {
+    function addVertex(position, u, v) {
       if (vertices) {
         vertices[currentCoordinate] = position.x;
         vertices[currentCoordinate + 1] = position.y;
         vertices[currentCoordinate + 2] = 0;
+
         if (normals) {
           normals[currentCoordinate] = 0;
           normals[currentCoordinate + 1] = 0;
@@ -2456,9 +2568,11 @@ export class SVGLoader extends THREE.Loader {
         }
 
         currentCoordinate += 3;
+
         if (uvs) {
           uvs[currentCoordinateUV] = u;
           uvs[currentCoordinateUV + 1] = v;
+
           currentCoordinateUV += 2;
         }
       }
@@ -2466,29 +2580,28 @@ export class SVGLoader extends THREE.Loader {
       numVertices += 3;
     }
 
-    function makeCircularSector(
-      center: THREE.Vector2,
-      p1: THREE.Vector2,
-      p2: THREE.Vector2,
-      u: number,
-      v: number
-    ) {
+    function makeCircularSector(center, p1, p2, u, v) {
       // param p1, p2: Points in the circle arc.
       // p1 and p2 are in clockwise direction.
 
       tempV2_1.copy(p1).sub(center).normalize();
       tempV2_2.copy(p2).sub(center).normalize();
+
       let angle = Math.PI;
       const dot = tempV2_1.dot(tempV2_2);
       if (Math.abs(dot) < 1) angle = Math.abs(Math.acos(dot));
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      angle /= arcDivisions!;
+
+      angle /= arcDivisions;
+
       tempV2_3.copy(p1);
-      for (let i = 0, il = arcDivisions! - 1; i < il; i++) {
+
+      for (let i = 0, il = arcDivisions - 1; i < il; i++) {
         tempV2_4.copy(tempV2_3).rotateAround(center, angle);
+
         addVertex(tempV2_3, u, v);
         addVertex(tempV2_4, u, v);
         addVertex(center, u, 0.5);
+
         tempV2_3.copy(tempV2_4);
       }
 
@@ -2501,25 +2614,23 @@ export class SVGLoader extends THREE.Loader {
       addVertex(lastPointR, u0, 1);
       addVertex(lastPointL, u0, 0);
       addVertex(currentPointL, u1, 0);
+
       addVertex(lastPointR, u0, 1);
       addVertex(currentPointL, u1, 1);
       addVertex(currentPointR, u1, 0);
     }
 
-    function makeSegmentWithBevelJoin(
-      joinIsOnLeftSide: boolean,
-      innerSideModified: boolean,
-      u: number
-    ) {
+    function makeSegmentWithBevelJoin(joinIsOnLeftSide, innerSideModified, u) {
       if (innerSideModified) {
         // Optimized segment + bevel triangles
 
         if (joinIsOnLeftSide) {
-          // THREE.Path segments triangles
+          // Path segments triangles
 
           addVertex(lastPointR, u0, 1);
           addVertex(lastPointL, u0, 0);
           addVertex(currentPointL, u1, 0);
+
           addVertex(lastPointR, u0, 1);
           addVertex(currentPointL, u1, 0);
           addVertex(innerPoint, u1, 1);
@@ -2530,11 +2641,12 @@ export class SVGLoader extends THREE.Loader {
           addVertex(nextPointL, u, 0);
           addVertex(innerPoint, u, 0.5);
         } else {
-          // THREE.Path segments triangles
+          // Path segments triangles
 
           addVertex(lastPointR, u0, 1);
           addVertex(lastPointL, u0, 0);
           addVertex(currentPointR, u1, 1);
+
           addVertex(lastPointL, u0, 0);
           addVertex(innerPoint, u1, 0);
           addVertex(currentPointR, u1, 1);
@@ -2561,20 +2673,23 @@ export class SVGLoader extends THREE.Loader {
     }
 
     function createSegmentTrianglesWithMiddleSection(
-      joinIsOnLeftSide: boolean,
-      innerSideModified: boolean
+      joinIsOnLeftSide,
+      innerSideModified
     ) {
       if (innerSideModified) {
         if (joinIsOnLeftSide) {
           addVertex(lastPointR, u0, 1);
           addVertex(lastPointL, u0, 0);
           addVertex(currentPointL, u1, 0);
+
           addVertex(lastPointR, u0, 1);
           addVertex(currentPointL, u1, 0);
           addVertex(innerPoint, u1, 1);
+
           addVertex(currentPointL, u0, 0);
           addVertex(currentPoint, u1, 0.5);
           addVertex(innerPoint, u1, 1);
+
           addVertex(currentPoint, u1, 0.5);
           addVertex(nextPointL, u0, 0);
           addVertex(innerPoint, u1, 1);
@@ -2582,12 +2697,15 @@ export class SVGLoader extends THREE.Loader {
           addVertex(lastPointR, u0, 1);
           addVertex(lastPointL, u0, 0);
           addVertex(currentPointR, u1, 1);
+
           addVertex(lastPointL, u0, 0);
           addVertex(innerPoint, u1, 0);
           addVertex(currentPointR, u1, 1);
+
           addVertex(currentPointR, u0, 1);
           addVertex(innerPoint, u1, 0);
           addVertex(currentPoint, u1, 0.5);
+
           addVertex(currentPoint, u1, 0.5);
           addVertex(innerPoint, u1, 0);
           addVertex(nextPointR, u0, 1);
@@ -2595,30 +2713,25 @@ export class SVGLoader extends THREE.Loader {
       }
     }
 
-    function addCapGeometry(
-      center: THREE.Vector2,
-      p1: THREE.Vector2,
-      p2: THREE.Vector2,
-      joinIsOnLeftSide: boolean | undefined,
-      start: boolean,
-      u: number | undefined
-    ) {
+    function addCapGeometry(center, p1, p2, joinIsOnLeftSide, start, u) {
       // param center: End point of the path
       // param p1, p2: Left and right cap points
 
       switch (style.strokeLineCap) {
         case "round":
           if (start) {
-            makeCircularSector(center, p2, p1, u!, 0.5);
+            makeCircularSector(center, p2, p1, u, 0.5);
           } else {
-            makeCircularSector(center, p1, p2, u!, 0.5);
+            makeCircularSector(center, p1, p2, u, 0.5);
           }
 
           break;
+
         case "square":
           if (start) {
             tempV2_1.subVectors(p1, center);
             tempV2_2.set(tempV2_1.y, -tempV2_1.x);
+
             tempV2_3.addVectors(tempV2_1, tempV2_2).add(center);
             tempV2_4.subVectors(tempV2_2, tempV2_1).add(center);
 
@@ -2635,8 +2748,10 @@ export class SVGLoader extends THREE.Loader {
           } else {
             tempV2_1.subVectors(p2, center);
             tempV2_2.set(tempV2_1.y, -tempV2_1.x);
+
             tempV2_3.addVectors(tempV2_1, tempV2_2).add(center);
             tempV2_4.subVectors(tempV2_2, tempV2_1).add(center);
+
             const vl = vertices.length;
 
             // Modify already existing vertices
@@ -2652,6 +2767,7 @@ export class SVGLoader extends THREE.Loader {
           }
 
           break;
+
         case "butt":
         default:
           // Nothing to do here
@@ -2659,7 +2775,7 @@ export class SVGLoader extends THREE.Loader {
       }
     }
 
-    function removeDuplicatedPoints(points: string | any[]) {
+    function removeDuplicatedPoints(points) {
       // Creates a new array if necessary with duplicated points removed.
       // This does not remove duplicated initial and ending points of a closed path.
 
@@ -2672,8 +2788,10 @@ export class SVGLoader extends THREE.Loader {
       }
 
       if (!dupPoints) return points;
+
       const newPoints = [];
       newPoints.push(points[0]);
+
       for (let i = 1, n = points.length - 1; i < n; i++) {
         if (points[i].distanceTo(points[i + 1]) >= minDistance) {
           newPoints.push(points[i]);
@@ -2681,7 +2799,10 @@ export class SVGLoader extends THREE.Loader {
       }
 
       newPoints.push(points[points.length - 1]);
+
       return newPoints;
     }
   }
 }
+
+export { SVGLoader };

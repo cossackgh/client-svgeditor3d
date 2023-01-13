@@ -54,8 +54,9 @@ h1 {
 }
 
 .svgmap{
-  width: 90%;
+  width: 80%;
   height: 90vh;
+  border: #fff solid 2px;
 }
 .baloon{
   padding: 10px;
@@ -196,6 +197,28 @@ aspect-ratio: 3/2;
 
 .w-full{
   width: 100%;
+}
+.button-block{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  list-style: none;
+  margin: 10px 0px;
+  padding: 0;
+}
+.btn__map_floor{
+  margin: 0 5px;
+  padding: 0.7em 1.2em;
+  font-size: 0.9em;
+}
+.btn__map_floor:hover{
+  background-color: #914283;
+  border-color: #fff;
+}
+.btn__map_floor.active{
+  background-color: #914283;
+  border-color: #fff;
 }
 .btn__map{
   margin: 0 5px;

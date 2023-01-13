@@ -34,21 +34,14 @@ export interface DataInteractive {
 export interface DataOptions {
   title?: string;
   colorBG?: string;
-  urlmap: string;
+  urlmap?: string;
   stringSVG?: string;
   interactiveLayer?: string;
-  description?: string;
-  image?: string;
   isRemoveUnuseItem?: boolean;
   isHoverEnable?: boolean;
   funcClick?: Function;
   funcParams?: any;
-  mapTheme?: MapTheme;
-  isCustomBalloon?: boolean;
-  nodeCustomBalloon?: HTMLElement | null;
-  dataStructureCustomBalloon?: CastomBalloonOptions | null;
-  isMobileZoom?: boolean | null;
-  isSVGFromSring?: boolean | null;
+  paramsMap?: ParamsMap;
 }
 
 /**
@@ -134,4 +127,86 @@ export interface MapTheme {
   widthBorderItem?: number;
   widthBorderHoverItem?: number;
   widthBorderSelectItem?: number;
+}
+export interface LoadObject {
+  nameLayer?: string;
+  urlMTL?: string;
+  urlOBJ: string;
+  color?: string | number;
+  position?: THREE.Vector3;
+  rotation?: THREE.Vector3;
+  scale?: THREE.Vector3;
+  positionGroup?: THREE.Vector3;
+  rotationGroup?: THREE.Vector3;
+  scaleGroup?: THREE.Vector3;
+  isAnimation?: boolean;
+  isLoopAnimation?: boolean;
+  pathAnimation?: string;
+}
+export interface ParamsMap {
+  positions?: THREE.Vector3;
+  rotations?: THREE.Vector3;
+  scales?: THREE.Vector3;
+}
+export interface GroupSettings {
+  positions?: THREE.Vector3;
+  rotations?: THREE.Vector3;
+  scales?: THREE.Vector3;
+  nameGroup?: string;
+}
+export interface ExtrudeSettings {
+  steps?: number;
+  depth: number;
+  bevelEnabled?: boolean;
+  bevelThickness?: number;
+  bevelSize?: number;
+  bevelOffset?: number;
+  bevelSegments?: number;
+}
+export interface OptionsExtrudeObject {
+  groupObjects: THREE.Group;
+  settingsGroup?: GroupSettings;
+  nameLayerSVG?: string;
+  settingsExtrude?: ExtrudeSettings;
+  material?: THREE.Material;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
+
+export interface ParametersStart {
+  layaerActive?: string;
+}
+export interface TextOptions {
+  text?: string;
+  color?: string | number;
+  size?: number;
+  font?: string;
+  position?: THREE.Vector3;
+  rotation?: THREE.Vector3;
+  scale?: THREE.Vector3;
+  isAnimation?: boolean;
+  isLoopAnimation?: boolean;
+  pathAnimation?: string;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
+export interface OptionsAnimationStep {
+  colorKeys?: string[] | number[];
+  colorSteps?: string[] | number[];
+  opacityKeys?: string[] | number[];
+  opacitySteps?: string[] | number[];
+  positionKeys?: number[];
+  positionSteps?: number[];
+  rotationKeys?: number[];
+  rotationSteps?: number[];
+  scaleKeys?: number[];
+  scaleSteps?: number[];
+  numberOfSteps?: number;
+  isAnimation?: boolean;
+  isLoopAnimation?: boolean;
+  pathAnimation?: string;
 }
