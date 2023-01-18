@@ -32,6 +32,7 @@ export interface DataInteractive {
  * @mapTheme {MapTheme}
  */
 export interface DataOptions {
+  isDebug?: boolean;
   title?: string;
   colorBG?: string;
   urlmap?: string;
