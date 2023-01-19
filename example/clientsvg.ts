@@ -1,5 +1,11 @@
 import { ClientSVG3D } from "../src/clientSVG3D";
-import { DataInteractive } from "../src/models/simple.models";
+import {
+  //DataInteractive,
+  OptionsAmbientLight,
+  OptionsCam,
+  OptionsPlane,
+  OptionsSpotLight,
+} from "../src/models/simple.models";
 import { dataShops2 } from "./dataItems";
 
 import * as THREE from "three";
@@ -21,6 +27,7 @@ export function testmylib(): boolean {
       nodeMap, // node - dom element to insert svg
       dataShops2, // dataItems - data to render
       {
+        isDebug: true, // isDebug - debug mode
         title: "Пример карты", // Head Title this map
         interactiveLayer: "shops", // Layer name for interactive
         urlmap: "./public/grand-floor-1-final.svg", // Path to map svg
@@ -102,7 +109,8 @@ export function testmylib(): boolean {
       console.log("selectMap element = ", floorMap);
       console.log("selectMap scenePublic = ", map1.scenePublic);
       //const geturl = dataelement.getAttribute('data-url')
-      nodeMap.innerHTML = "";
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      nodeMap!.innerHTML = "";
       switch (floorMap) {
         case "floor-1":
           map1.clearThree(map1.scenePublic);
@@ -114,76 +122,6 @@ export function testmylib(): boolean {
           };
           addWall(map1, "floor-1");
           addFloor(map1, "floor-1");
-          /* map1.addObject({
-            urlOBJ: "./public/3dobj/obj/cafe.obj",
-            urlMTL: "./public/3dobj/obj/cafe.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 2, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(-460, -27, 3),
-          });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/cafe.obj",
-            urlMTL: "./public/3dobj/obj/cafe.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 4, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(205, 120, 3),
-          }); */
-          /*           map1.addText({
-            text: "Вход №2",
-            color: 0xff0000,
-            size: 12.0,
-            position: { x: -10, y: -50, z: 50 },
-            rotation: { x: Math.PI / 2, y: 0, z: 0 },
-          }); */
-          /* map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(-20, 10, 0),
-          });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(-50, 45, 0),
-          });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 1.25, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(267, 58, 0),
-          });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 4, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(336, -10, 0),
-          });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 1.52, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(-285, 47, 0),
-          });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/lift.obj",
-            urlMTL: "./public/3dobj/obj/lift.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 0.01, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(284, 4, 0),
-          });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/lift.obj",
-            urlMTL: "./public/3dobj/obj/lift.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 1.0, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(326, 41, 0),
-          }); */
           console.log("SELECT MAP 1 =>> ", map1);
           break;
         case "floor-2":
@@ -311,6 +249,15 @@ export function testmylib(): boolean {
         default:
           break;
       }
+
+      let paramCam: OptionsCam | undefined;
+      let paramAmbientLight: OptionsAmbientLight | undefined;
+      let paramSpotLight: OptionsSpotLight | undefined;
+      let paramPlane: OptionsPlane | undefined;
+      map1.addCamera(paramCam);
+      map1.addAmbientLight(paramAmbientLight);
+      map1.addSpotLight(paramSpotLight);
+      map1.addPlane(paramPlane);
       map1.init();
       addTexts(map1);
       const loadObj = await map1.addObject({
@@ -502,6 +449,7 @@ export function testmylib(): boolean {
     console.log("Add Text Object");
     map.addTextToSVGPoint(
       {
+        font: "./public/fonts/Roboto_Bold.json",
         text: "№1",
         color: 0x666666,
         size: 25.0,
@@ -516,6 +464,7 @@ export function testmylib(): boolean {
     );
     map.addTextToSVGPoint(
       {
+        font: "./public/fonts/Roboto_Bold.json",
         text: "№2",
         color: 0x666666,
         size: 25.0,
@@ -530,6 +479,7 @@ export function testmylib(): boolean {
     );
     map.addTextToSVGPoint(
       {
+        font: "./public/fonts/Roboto_Bold.json",
         text: "№3",
         color: 0x666666,
         size: 25.0,
@@ -544,6 +494,7 @@ export function testmylib(): boolean {
     );
     map.addTextToSVGPoint(
       {
+        font: "./public/fonts/Roboto_Bold.json",
         text: "№4",
         color: 0x666666,
         size: 25.0,
@@ -558,6 +509,7 @@ export function testmylib(): boolean {
     );
     map.addTextToSVGPoint(
       {
+        font: "./public/fonts/Roboto_Bold.json",
         text: "№5",
         color: 0x104465,
         size: 40.0,
@@ -568,6 +520,7 @@ export function testmylib(): boolean {
     );
     map.addTextToSVGPoint(
       {
+        font: "./public/fonts/Roboto_Bold.json",
         text: "№6",
         color: 0x104465,
         size: 40.0,
@@ -578,6 +531,7 @@ export function testmylib(): boolean {
     );
     map.addTextToSVGPoint(
       {
+        font: "./public/fonts/Roboto_Bold.json",
         text: "№7",
         color: 0x666666,
         size: 25.0,
@@ -590,55 +544,6 @@ export function testmylib(): boolean {
       },
       "entrance-7"
     );
-    /*map.addText({
-      text: "Вход №2",
-      color: 0x440000,
-      size: 12.0,
-      position: new THREE.Vector3(-10, -50, 40),
-      rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-    });
-    map.addText({
-      text: "Вход №3",
-      color: 0x440000,
-      size: 12.0,
-      position: new THREE.Vector3(360, -120, 40),
-      rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-    });
-    map.addText({
-      text: "Вход №4",
-      color: 0x440000,
-      size: 12.0,
-      position: new THREE.Vector3(500, -80, 40),
-      rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-    });
-    map.addText({
-      text: "Вход №1",
-      color: 0x440000,
-      size: 12.0,
-      position: new THREE.Vector3(-240, -50, 40),
-      rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-    });
-    map.addText({
-      text: "Вход №6",
-      color: 0x440000,
-      size: 12.0,
-      position: new THREE.Vector3(-140, 180, 40),
-      rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-    });
-    map.addText({
-      text: "Вход №5",
-      color: 0x440000,
-      size: 12.0,
-      position: new THREE.Vector3(150, 280, 40),
-      rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-    });
-    map.addText({
-      text: "Вход №7",
-      color: 0x440000,
-      size: 12.0,
-      position: new THREE.Vector3(-500, -80, 40),
-      rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-    }); */
     console.log("Add Text Object", map.scenePublic);
   }
   function gotoURLClick(dataelement: any): void {

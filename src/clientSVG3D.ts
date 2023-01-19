@@ -9,6 +9,10 @@ import type {
   //ParametersStart,
   TextOptions,
   OptionsAnimationStep,
+  OptionsCam,
+  OptionsSpotLight,
+  OptionsAmbientLight,
+  OptionsPlane,
 } from "./models/simple.models";
 //import { SvgMap } from './_privatemodule/svg'
 import Base from "./base";
@@ -191,26 +195,15 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     ClientSVG3D.renderer.shadowMap.enabled = true;
     container.appendChild(ClientSVG3D.renderer.domElement);
-    this.addCamera();
-    this.addLight();
-    this.addPlane();
-    //this.addHelpers(true, false, false);
-    //this.addExample();
-    /*     this.addGLB({
-      urlOBJ: "./public/3dobj/scene.glb",
-      //urlMTL: "./public/3dobj/car-1.mtl",
-      rotation: { x: Math.PI / 2, y: 0, z: 0 },
-      scale: { x: 0.1, y: 0.1, z: 0.1 },
-      position: { x: -400, y: -220, z: 2 },
-    });
-    this.addObject({
-      urlOBJ: "./public/3dobj/obj/cafe.obj",
-      urlMTL: "./public/3dobj/obj/cafe.mtl",
-      rotation: { x: Math.PI / 2, y: Math.PI / 2, z: 0 },
-      scale: { x: 50.003, y: 50.003, z: 50.003 },
-      position: { x: -460, y: -30, z: 0 },
-      group: new THREE.Group(),
-    }); */
+    /*let paramCam: OptionsCam | undefined;
+    let paramAmbientLight: OptionsAmbientLight | undefined;
+    let paramSpotLight: OptionsSpotLight | undefined;
+    let paramPlane: OptionsPlane | undefined;
+    this.addCamera(paramCam);
+    this.addAmbientLight(paramAmbientLight);
+    this.addSpotLight(paramSpotLight);
+    this.addPlane(paramPlane); */
+
     this.addSVGExtrudeObject({
       groupObjects: new THREE.Group(),
       settingsGroup: {
@@ -272,27 +265,39 @@ export class ClientSVG3D extends Base {
       defaultKeepAlive: true, // keeps outline material in cache even if material is removed from scene
     }); */
   }
-  addCamera(): void {
-    ClientSVG3D.camera.fov = 55;
-    ClientSVG3D.camera.aspect = window.innerWidth / window.innerHeight;
-    ClientSVG3D.camera.near = 1;
-    ClientSVG3D.camera.far = 2000;
-    ClientSVG3D.camera.zoom = 1.0;
-    //ClientSVG3D.camera.position.set(0, -1500, 2000); // Set position like this
-    ClientSVG3D.camera.position.set(0, -1500, 0); // Set position like this
+  addCamera(optionsCam: OptionsCam | undefined): void {
+    ClientSVG3D.camera.fov = optionsCam?.fov ?? 55;
+    ClientSVG3D.camera.aspect =
+      optionsCam?.aspect ?? window.innerWidth / window.innerHeight;
+    ClientSVG3D.camera.near = optionsCam?.near ?? 1;
+    ClientSVG3D.camera.far = optionsCam?.far ?? 2000;
+    ClientSVG3D.camera.zoom = optionsCam?.zoom ?? 1.0;
+    ClientSVG3D.camera.position.set(
+      optionsCam?.position?.x ?? 0,
+      optionsCam?.position?.y ?? -1500,
+      optionsCam?.position?.z ?? 0
+    ); // Set position like this
     ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
     //ClientSVG3D.scene.add(ClientSVG3D.camera);
     ClientSVG3D.camera.updateProjectionMatrix();
   }
-  addLight(): void {
-    const ambiLight = new THREE.AmbientLight(0xffffff, 0.8);
-    ambiLight.name = "AmbientLight";
+  addAmbientLight(optionsAmbientLight: OptionsAmbientLight | undefined): void {
+    const ambiLight = new THREE.AmbientLight(
+      optionsAmbientLight?.color ?? 0xffffff,
+      optionsAmbientLight?.intensity ?? 0.8
+    );
+    ambiLight.name = optionsAmbientLight?.name ?? "AmbientLight";
     ClientSVG3D.scene.add(ambiLight);
+  }
+  addSpotLight(optionsSpotLight: OptionsSpotLight | undefined): void {
     const targetObject = new THREE.Object3D();
     targetObject.name = "TargetSpotLight";
 
-    ClientSVG3D.spotlight = new THREE.SpotLight(0xffffff, 0.3);
-    ClientSVG3D.spotlight.name = "SpotLight";
+    ClientSVG3D.spotlight = new THREE.SpotLight(
+      optionsSpotLight?.color ?? 0xffffff,
+      optionsSpotLight?.intensity ?? 0.3
+    );
+    ClientSVG3D.spotlight.name = optionsSpotLight?.name ?? "SpotLight";
     ClientSVG3D.spotlight.position.set(20, 200, 1800);
     ClientSVG3D.spotlight.angle = -Math.PI * 0.3;
     ClientSVG3D.spotlight.castShadow = true;
@@ -311,25 +316,23 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.scene.add(ClientSVG3D.spotlight);
     //ClientSVG3D.scene.add(lightHelper1);
   }
-  addPlane(): void {
-    const materialShadow = new THREE.ShadowMaterial();
+  addPlane(optionsPlane: OptionsPlane | undefined): void {
+    const materialShadow = optionsPlane?.material ?? new THREE.ShadowMaterial();
     materialShadow.opacity = 0.3;
     materialShadow.color = new THREE.Color(0x000000);
-    const materialPlane = new THREE.MeshPhongMaterial({
-      color: 0xff1111,
-      specular: 0x666666,
-      emissive: 0x003333,
-      shininess: 6,
-      opacity: 0.7,
-      transparent: true,
-    });
-    const geometry = new THREE.PlaneGeometry(3000, 3000, 30, 30);
+
+    const geometry = new THREE.PlaneGeometry(
+      optionsPlane?.width ?? 3000,
+      optionsPlane?.height ?? 3000,
+      optionsPlane?.widthSegments ?? 30,
+      optionsPlane?.heightSegments ?? 30
+    );
     //geometry.rotateX(-Math.PI / 0.001);
     const plane = new THREE.Mesh(geometry, materialShadow);
-    plane.name = "plane";
-    plane.position.z = 0;
-    plane.castShadow = true;
-    plane.receiveShadow = true;
+    plane.name = "Pane";
+    plane.position.z = optionsPlane?.position?.z ?? 0;
+    plane.castShadow = optionsPlane?.shadow?.castShadow ?? true;
+    plane.receiveShadow = optionsPlane?.shadow?.receiveShadow ?? true;
     ClientSVG3D.scene.add(plane);
   }
   addHelpers(x: boolean, y: boolean, z: boolean): void {
@@ -486,7 +489,7 @@ export class ClientSVG3D extends Base {
   }
   addText(optionsText: TextOptions): void {
     const loader = new FontLoader();
-    loader.load("./public/fonts/Roboto_Bold.json", function (response: any) {
+    loader.load(optionsText.font, function (response: any) {
       const font = response;
       //console.log(" ### ==== #### addText font = > ", font);
       const textGeo = new TextGeometry(optionsText.text, {

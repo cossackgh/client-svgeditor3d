@@ -211,3 +211,52 @@ export interface OptionsAnimationStep {
   isLoopAnimation?: boolean;
   pathAnimation?: string;
 }
+
+export interface OptionsPlane {
+  material?: THREE.ShadowMaterial;
+  position?: THREE.Vector3;
+  width?: number;
+  height?: number;
+  widthSegments?: number;
+  heightSegments?: number;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
+export interface OptionsCam {
+  fov?: number;
+  aspect?: number;
+  near?: number;
+  far?: number;
+  zoom?: number;
+  position?: THREE.Vector3;
+}
+export interface OptionsAmbientLight {
+  name?: string;
+  color?: THREE.ColorRepresentation | undefined;
+  intensity?: number | undefined;
+}
+export interface OptionsSpotLight {
+  name?: string;
+  color?: THREE.ColorRepresentation | undefined;
+  intensity?: number | undefined;
+  distance?: number | undefined;
+  angle?: number | undefined;
+  penumbra?: number | undefined;
+  decay?: number | undefined;
+  position?: THREE.Vector3 | undefined;
+  castShadow?: boolean | undefined;
+  shadow?:
+    | {
+        mapSize?: THREE.Vector2 | undefined;
+        bias?: number | undefined;
+        radius?: number | undefined;
+        camera?: {
+          near: number | undefined;
+          far: number | undefined;
+          fov: number | undefined;
+        };
+      }
+    | undefined;
+}
