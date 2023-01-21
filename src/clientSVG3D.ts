@@ -185,11 +185,11 @@ export class ClientSVG3D extends Base {
     }
 
     //this.changeSceneBG(this.options?.mapTheme?.colorBG?.toString() || "#000");
-    ClientSVG3D.renderer?.render(ClientSVG3D.scene, ClientSVG3D.camera);
     ClientSVG3D.renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true,
     });
+    ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
     ClientSVG3D.renderer.setSize(container.clientWidth, container.clientHeight);
     //ClientSVG3D.renderer.shadowMap.type = THREE.BasicShadowMap;
     ClientSVG3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -997,9 +997,10 @@ export class ClientSVG3D extends Base {
       console.log("start  ClientSVG3D", ClientSVG3D.nodeMap);
     //this.clearThree(ClientSVG3D.scene);
     this.init();
-    ClientSVG3D.animate();
+    //this.animate();
     window.addEventListener("resize", this.onWindowResize);
     //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);
+    if (ClientSVG3D.DEBUG) console.log("start  this.options", this.options);
     if (this.options.isHoverEnable) {
       this.node.addEventListener(
         "mousemove",
@@ -1216,7 +1217,7 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
     console.log("render");
   } */
-  static animate() {
+  animate() {
     if (ClientSVG3D.DEBUG) console.log("animate");
 
     if (ClientSVG3D.mixer !== undefined)
