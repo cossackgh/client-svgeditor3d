@@ -231,7 +231,7 @@ export class ClientSVG3D extends Base {
       },
     });
 
-    this.addControls(true, true, false);
+    //this.addControls(true, true, false);
 
     //Postprocessing
     /*     const composer = new EffectComposer(ClientSVG3D.renderer);
@@ -329,7 +329,7 @@ export class ClientSVG3D extends Base {
     );
     //geometry.rotateX(-Math.PI / 0.001);
     const plane = new THREE.Mesh(geometry, materialShadow);
-    plane.name = "Pane";
+    plane.name = "Plane";
     plane.position.z = optionsPlane?.position?.z ?? 0;
     plane.castShadow = optionsPlane?.shadow?.castShadow ?? true;
     plane.receiveShadow = optionsPlane?.shadow?.receiveShadow ?? true;
@@ -1000,11 +1000,13 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.animate();
     window.addEventListener("resize", this.onWindowResize);
     //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);
-    this.node.addEventListener(
-      "mousemove",
-      ClientSVG3D.onDocumentMouseMove,
-      false
-    );
+    if (this.options.isHoverEnable) {
+      this.node.addEventListener(
+        "mousemove",
+        ClientSVG3D.onDocumentMouseMove,
+        false
+      );
+    }
   }
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   static onDocumentMouseMove(event: {
