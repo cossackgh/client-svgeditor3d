@@ -277,7 +277,7 @@ export class ClientSVG3D extends Base {
       optionsCam?.position?.y ?? -1500,
       optionsCam?.position?.z ?? 0
     ); // Set position like this
-    ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
+    //ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
     //ClientSVG3D.scene.add(ClientSVG3D.camera);
     ClientSVG3D.camera.updateProjectionMatrix();
   }
