@@ -189,12 +189,15 @@ export class ClientSVG3D extends Base {
       alpha: true,
       antialias: true,
     });
-    ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
     ClientSVG3D.renderer.setSize(container.clientWidth, container.clientHeight);
     //ClientSVG3D.renderer.shadowMap.type = THREE.BasicShadowMap;
     ClientSVG3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     ClientSVG3D.renderer.shadowMap.enabled = true;
     container.appendChild(ClientSVG3D.renderer.domElement);
+    ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
+    if (ClientSVG3D.DEBUG) console.log("container", container);
+    if (ClientSVG3D.DEBUG)
+      console.log("ClientSVG3D.renderer.", ClientSVG3D.renderer.domElement);
     /*let paramCam: OptionsCam | undefined;
     let paramAmbientLight: OptionsAmbientLight | undefined;
     let paramSpotLight: OptionsSpotLight | undefined;
@@ -204,7 +207,7 @@ export class ClientSVG3D extends Base {
     this.addSpotLight(paramSpotLight);
     this.addPlane(paramPlane); */
 
-    this.addSVGExtrudeObject({
+    /*this.addSVGExtrudeObject({
       groupObjects: new THREE.Group(),
       settingsGroup: {
         nameGroup: "active",
@@ -229,7 +232,7 @@ export class ClientSVG3D extends Base {
         castShadow: true,
         receiveShadow: false,
       },
-    });
+    }); */
 
     //this.addControls(true, true, false);
 
@@ -996,7 +999,7 @@ export class ClientSVG3D extends Base {
     if (ClientSVG3D.DEBUG)
       console.log("start  ClientSVG3D", ClientSVG3D.nodeMap);
     //this.clearThree(ClientSVG3D.scene);
-    this.init();
+    //this.init();
     //this.animate();
     window.addEventListener("resize", this.onWindowResize);
     //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);

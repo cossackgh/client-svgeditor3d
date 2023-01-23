@@ -28,6 +28,7 @@ export function testmylib(): boolean {
       dataShops2, // dataItems - data to render
       {
         isDebug: true, // isDebug - debug mode
+        isHoverEnable: true, // isDebug - debug mode
         title: "Пример карты", // Head Title this map
         interactiveLayer: "shops", // Layer name for interactive
         urlmap: "./public/grand-floor-1-final.svg", // Path to map svg
@@ -91,14 +92,29 @@ export function testmylib(): boolean {
         btn.classList.remove("active");
       });
     }
+
+    const paramCam: OptionsCam = {};
     map1.start();
-    const groupTree = new THREE.Group();
+    map1.init();
+    paramCam.aspect = nodeMap.offsetWidth / nodeMap.offsetHeight;
+    let paramAmbientLight: OptionsAmbientLight | undefined;
+    let paramSpotLight: OptionsSpotLight | undefined;
+    let paramPlane: OptionsPlane | undefined;
+    map1.addCamera(paramCam);
+    map1.addAmbientLight(paramAmbientLight);
+    map1.addSpotLight(paramSpotLight);
+    map1.addPlane(paramPlane);
+    addTexts(map1);
+    map1.addControls(true, true, false);
+    selectMap("floor-1");
+
+    /*const groupTree = new THREE.Group();
     groupTree.name = "building";
     groupTree.position.x = 0;
     groupTree.position.y = 0;
     groupTree.position.z = 0;
     selectMap("floor-1");
-    console.log("START MAP =>> ", map1);
+    console.log("START MAP =>> ", map1); */
     function selectShop(dataelement: any): void {
       console.log("selectShop element = ", dataelement);
       //const geturl = dataelement.getAttribute('data-url')
@@ -110,10 +126,14 @@ export function testmylib(): boolean {
       console.log("selectMap scenePublic = ", map1.scenePublic);
       //const geturl = dataelement.getAttribute('data-url')
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      nodeMap!.innerHTML = "";
+      //nodeMap!.innerHTML = "";
+      const objectDeleted = map1.scenePublic.getObjectByProperty(
+        "name",
+        "rootMap"
+      );
       switch (floorMap) {
         case "floor-1":
-          map1.clearThree(map1.scenePublic);
+          map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-1-final.svg";
           map1.options.paramsMap = {
             positions: new THREE.Vector3(0, 0, 5),
@@ -125,7 +145,7 @@ export function testmylib(): boolean {
           console.log("SELECT MAP 1 =>> ", map1);
           break;
         case "floor-2":
-          map1.clearThree(map1.scenePublic);
+          map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-2-final.svg";
           map1.options.paramsMap = {
             positions: new THREE.Vector3(0, 0, 35),
@@ -200,7 +220,7 @@ export function testmylib(): boolean {
           console.log("SELECT MAP 2 =>> ", map1);
           break;
         case "floor-3":
-          map1.clearThree(map1.scenePublic);
+          map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-3-final.svg";
           map1.options.paramsMap = {
             positions: new THREE.Vector3(0, 0, 65),
@@ -212,7 +232,7 @@ export function testmylib(): boolean {
           addRoof(map1, "floor-3");
           break;
         case "floor-4":
-          map1.clearThree(map1.scenePublic);
+          map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-4-final.svg";
           map1.options.paramsMap = {
             positions: new THREE.Vector3(0, 0, 95),
@@ -224,7 +244,7 @@ export function testmylib(): boolean {
           addRoof(map1, "floor-4");
           break;
         case "floor-5":
-          map1.clearThree(map1.scenePublic);
+          map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-5-final.svg";
           map1.options.paramsMap = {
             positions: new THREE.Vector3(0, 0, 120),
@@ -236,7 +256,7 @@ export function testmylib(): boolean {
           addRoof(map1, "floor-5");
           break;
         case "floor-0":
-          map1.clearThree(map1.scenePublic);
+          map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-0-final.svg";
           map1.options.paramsMap = {
             positions: new THREE.Vector3(0, 0, 95),
@@ -249,8 +269,39 @@ export function testmylib(): boolean {
         default:
           break;
       }
-
-      let paramCam: OptionsCam | undefined;
+      console.log("SELECT MAP  =>> ", map1);
+      map1.addSVGExtrudeObject({
+        groupObjects: new THREE.Group(),
+        settingsGroup: {
+          nameGroup: "active",
+          positions: new THREE.Vector3(
+            -700,
+            -220,
+            map1.options.paramsMap?.positions?.z
+          ),
+          scales: new THREE.Vector3(0.5, 0.5, 0.5),
+        },
+        nameLayerSVG: "shops",
+        settingsExtrude: {
+          depth: 6,
+          bevelEnabled: false,
+        },
+        material: new THREE.MeshPhongMaterial({
+          color: 0x111111,
+          specular: 0x666666,
+          emissive: 0x777777,
+          shininess: 6,
+          opacity: 0.9,
+          transparent: false,
+          wireframe: false,
+        }),
+        shadow: {
+          castShadow: true,
+          receiveShadow: false,
+        },
+      });
+      console.log("Scene Public =>> ", map1.scenePublic);
+      /*let paramCam: OptionsCam | undefined;
       let paramAmbientLight: OptionsAmbientLight | undefined;
       let paramSpotLight: OptionsSpotLight | undefined;
       let paramPlane: OptionsPlane | undefined;
@@ -258,7 +309,6 @@ export function testmylib(): boolean {
       map1.addAmbientLight(paramAmbientLight);
       map1.addSpotLight(paramSpotLight);
       map1.addPlane(paramPlane);
-      map1.init();
       addTexts(map1);
       const loadObj = await map1.addObject({
         urlOBJ: "./public/3dobj/car-2.obj",
@@ -268,7 +318,7 @@ export function testmylib(): boolean {
         scale: new THREE.Vector3(0.2, 0.2, 0.2),
         position: new THREE.Vector3(550, 60, 6),
         isAnimation: true,
-      });
+      }); */
       //console.log("LOAD OBJ =>> ", loadObj);
       /* map1.addAnimation(loadObj.children[0], {
         numberOfSteps: 6,
