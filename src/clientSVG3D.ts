@@ -361,14 +361,23 @@ export class ClientSVG3D extends Base {
     axesHelper.name = "axesHelper";
     ClientSVG3D.scene.add(axesHelper);
   }
-  addControls(isZoom: boolean, isPan: boolean, isRotate: boolean): void {
+  addControls({
+    isZoom = true,
+    isPan = true,
+    isRotate = true,
+    minPolarAngle = Math.PI / 2,
+    maxPolarAngle = Math.PI / 1.4,
+    minDistance = 0,
+    maxDistance = 10000,
+    target = new THREE.Vector3(0, 0, 0),
+  }): void {
     ClientSVG3D.controls = new OrbitControls(
       ClientSVG3D.camera,
       ClientSVG3D.renderer.domElement
     );
 
     ClientSVG3D.controls.addEventListener("change", this.renderEventControl);
-    ClientSVG3D.controls.screenSpacePanning = false;
+    //ClientSVG3D.controls.screenSpacePanning = false;
     ClientSVG3D.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
     ClientSVG3D.controls.dampingFactor = 0.05;
 
@@ -377,14 +386,15 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.controls.enableRotate = isRotate;
     ClientSVG3D.controls.screenSpacePanning = true;
 
-    ClientSVG3D.controls.minDistance = 1500;
-    ClientSVG3D.controls.maxDistance = 3000;
+    ClientSVG3D.controls.minDistance = minDistance;
+    ClientSVG3D.controls.maxDistance = maxDistance;
 
-    ClientSVG3D.controls.minPolarAngle = Math.PI / 2;
-    ClientSVG3D.controls.maxPolarAngle = Math.PI / 1.2;
+    ClientSVG3D.controls.minPolarAngle = minPolarAngle;
+    ClientSVG3D.controls.maxPolarAngle = maxPolarAngle;
     ClientSVG3D.controls.maxAzimuthAngle = Math.PI;
-    ClientSVG3D.controls.target = new THREE.Vector3(0, 1230, -620);
+    ClientSVG3D.controls.target = target;
     ClientSVG3D.controls.update();
+    //ClientSVG3D.controls.reset();
   }
   addExample(): void {
     const geometry = new THREE.BoxGeometry(60, 60, 60);

@@ -94,9 +94,15 @@ export function testmylib(): boolean {
     }
 
     const paramCam: OptionsCam = {};
+    const targetCam = new THREE.Vector3(0, 0, 0);
     map1.start();
     map1.init();
+    //paramCam.fov = 55;
     paramCam.aspect = nodeMap.offsetWidth / nodeMap.offsetHeight;
+    //paramCam.near = 1;
+    paramCam.far = 20000;
+    paramCam.zoom = 1.0;
+    paramCam.position?.set(3000, 0, 0);
     let paramAmbientLight: OptionsAmbientLight | undefined;
     let paramSpotLight: OptionsSpotLight | undefined;
     let paramPlane: OptionsPlane | undefined;
@@ -105,7 +111,15 @@ export function testmylib(): boolean {
     map1.addSpotLight(paramSpotLight);
     map1.addPlane(paramPlane);
     addTexts(map1);
-    map1.addControls(true, true, false);
+    map1.addControls({
+      isZoom: true,
+      isPan: true,
+      isRotate: false,
+      minDistance: 900,
+      maxDistance: 3000,
+      maxPolarAngle: Math.PI / 1.4,
+      target: targetCam,
+    });
     selectMap("floor-1");
 
     /*const groupTree = new THREE.Group();
