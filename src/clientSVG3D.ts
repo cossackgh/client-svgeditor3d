@@ -629,7 +629,9 @@ export class ClientSVG3D extends Base {
       },
       function (xhr: { loaded: number; total: number }) {
         if (ClientSVG3D.DEBUG)
-          console.log((xhr.loaded / xhr.total) * 100 + "% loaded SHOPS");
+          console.log(
+            (xhr.loaded / xhr.total) * 100 + "% loaded SHOPS for text"
+          );
       },
       function (error: any) {
         if (ClientSVG3D.DEBUG) console.log("An error happened", error);
@@ -963,6 +965,7 @@ export class ClientSVG3D extends Base {
         }
         ClientSVG3D.rootMap.add(groupSVGExtrude);
         ClientSVG3D.render();
+        return "OK";
       },
       function (xhr: { loaded: number; total: number }) {
         if (ClientSVG3D.DEBUG)
@@ -986,8 +989,11 @@ export class ClientSVG3D extends Base {
     this.clearColorActive();
     const id = item;
     const group = ClientSVG3D.scene.getObjectByName("active");
+
+    if (ClientSVG3D.DEBUG) console.log("selectItem ClientSVG3D.scene => ", ClientSVG3D.scene);
     if (group) {
       const mesh = group.getObjectByName(id);
+      if (ClientSVG3D.DEBUG) console.log("selectItem group => ", group);
       if (mesh) {
         (mesh as THREE.Mesh).material = new THREE.MeshPhongMaterial({
           color: 0xff1111,
