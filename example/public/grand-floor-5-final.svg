@@ -26,15 +26,15 @@
    inkscape:pagecheckerboard="0"
    inkscape:deskcolor="#d1d1d1"
    showgrid="false"
-   inkscape:zoom="0.19666667"
-   inkscape:cx="1233.0508"
-   inkscape:cy="633.05085"
+   inkscape:zoom="0.39115385"
+   inkscape:cx="1300"
+   inkscape:cy="599.50836"
    inkscape:window-width="1410"
    inkscape:window-height="771"
-   inkscape:window-x="0"
-   inkscape:window-y="25"
+   inkscape:window-x="2012"
+   inkscape:window-y="53"
    inkscape:window-maximized="0"
-   inkscape:current-layer="layer2" /><defs
+   inkscape:current-layer="shops" /><defs
    id="defs49822"><clipPath
      clipPathUnits="userSpaceOnUse"
      id="clipPath546166"><path
@@ -305,10 +305,12 @@
 <path
    style="fill:none;stroke:#ff0000;stroke-width:2;stroke-linejoin:round"
    d="m 1399.4118,406.56863 c 0,0 138.9215,28.03922 224.3137,110.88235 85.3922,82.84314 150.3922,173.33334 156.7647,186.07844 6.3726,12.74509 22.9412,38.23529 22.9412,38.23529 h -40.7843 v 75.19608 H 1415.9804 L 1251.5686,555.68628 h 95.5883 l 45.8823,-65 z"
-   id="path67655" /><path
+   id="path67655"
+   inkscape:label="Shape-2-01" /><path
    style="fill:none;stroke:#ff0000;stroke-width:2;stroke-linejoin:round"
    d="m 1377.7451,404.01961 v 29.31373 h -43.3333 l -90.4902,96.86274 -87.9412,-133.82353 c 0,0 93.0392,-6.37255 136.3725,-1.27451 43.3334,5.09804 85.3922,8.92157 85.3922,8.92157 z"
-   id="path67657" /></g>
+   id="path67657"
+   inkscape:label="Shape-2-02" /></g>
 <g
    id="floor"
    style="display:inline">
