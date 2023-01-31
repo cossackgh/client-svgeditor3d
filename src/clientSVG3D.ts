@@ -984,13 +984,16 @@ export class ClientSVG3D extends Base {
   onError(error: any) {
     if (ClientSVG3D.DEBUG) console.log("An error happened", error);
   }
-  selectItem(item: string): void {
+  selectItem(item: string, isClear = true): void {
     if (ClientSVG3D.DEBUG) console.log("selectItem => ", item);
-    this.clearColorActive();
+    if (isClear) {
+      this.clearColorActive();
+    }
     const id = item;
     const group = ClientSVG3D.scene.getObjectByName("active");
 
-    if (ClientSVG3D.DEBUG) console.log("selectItem ClientSVG3D.scene => ", ClientSVG3D.scene);
+    if (ClientSVG3D.DEBUG)
+      console.log("selectItem ClientSVG3D.scene => ", ClientSVG3D.scene);
     if (group) {
       const mesh = group.getObjectByName(id);
       if (ClientSVG3D.DEBUG) console.log("selectItem group => ", group);
