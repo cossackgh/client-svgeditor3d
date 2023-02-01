@@ -104,6 +104,10 @@ export class ClientSVG3D extends Base {
   static groupTexts = new THREE.Group();
   static outlinePass: OutlinePass;
   static effect: OutlineEffect;
+  static place_1_call() {
+    console.log("place to call");
+    // throw new Error("Method not implemented.");
+  }
   constructor(
     node: HTMLElement,
     dataItems: DataInteractive[],
@@ -900,7 +904,10 @@ export class ClientSVG3D extends Base {
     const clipAction = ClientSVG3D.mixer.clipAction(clip);
     clipAction.play();
   }
-  async addSVGExtrudeObject(options: OptionsExtrudeObject): Promise<void> {
+  async addSVGExtrudeObject(
+    options: OptionsExtrudeObject,
+    selectItems: string[] = []
+  ): Promise<string> {
     const classOptions = this.options;
     const manager = new THREE.LoadingManager();
     const loaderSVG = new SVGLoader(manager);
@@ -935,26 +942,11 @@ export class ClientSVG3D extends Base {
           const simpleShapes = SVGLoader.createShapes(path);
           for (let j = 0; j < simpleShapes.length; j++) {
             if (path.userData.node.parentNode.id === options.nameLayerSVG) {
-              /* console.log(
-                "    ## paths options.nameLayerSVG => ",
-                options.nameLayerSVG
-              );
-              console.log("    ## paths => ", path.userData.node.parentNode.id); */
               const simpleShape = simpleShapes[j];
               const shape3d = new THREE.ExtrudeGeometry(
                 simpleShape,
                 options.settingsExtrude
               );
-              /*               if (options.material !== undefined) {
-                options.material.userData.outlineParameters = {
-                  thickness: 0.001,
-                  color: [54, 0, 0],
-                  alpha: 0.8,
-                  visible: true,
-                  keepAlive: false,
-                };
-              } */
-
               const mesh = new THREE.Mesh(shape3d, options.material);
               mesh.castShadow = options.shadow?.castShadow as boolean;
               mesh.receiveShadow = options.shadow?.receiveShadow as boolean;
@@ -965,6 +957,11 @@ export class ClientSVG3D extends Base {
         }
         ClientSVG3D.rootMap.add(groupSVGExtrude);
         ClientSVG3D.render();
+        if (selectItems.length > 0) {
+          selectItems.forEach((item: string) => {
+            this.selectItem(item, false);
+          });
+        }
         return "OK";
       },
       function (xhr: { loaded: number; total: number }) {
@@ -975,6 +972,7 @@ export class ClientSVG3D extends Base {
         if (ClientSVG3D.DEBUG) console.log("An error happened", error);
       }
     );
+    return "OK-2";
   }
 
   onProgress(xhr: { loaded: number; total: number }) {

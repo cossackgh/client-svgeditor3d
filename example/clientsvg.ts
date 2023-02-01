@@ -63,12 +63,12 @@ export function testmylib(): boolean {
     btnMap1?.addEventListener("click", () => {
       clearActiveFloor();
       btnMap1.classList.add("active");
-      selectMap("floor-1");
+      selectMap("floor-1", ["Shape-2-50"]);
     });
     btnMap2?.addEventListener("click", () => {
       clearActiveFloor();
       btnMap2.classList.add("active");
-      selectMap("floor-2");
+      selectMap("floor-2", ["Shape-2-01", "Shape-2-11"]);
     });
     btnMap3?.addEventListener("click", () => {
       clearActiveFloor();
@@ -135,7 +135,10 @@ export function testmylib(): boolean {
 
       map1.selectItem(dataelement);
     }
-    async function selectMap(floorMap: any): Promise<void> {
+    async function selectMap(
+      floorMap: any,
+      selectItem: string[] = []
+    ): Promise<void> {
       console.log("selectMap element = ", floorMap);
       console.log("selectMap scenePublic = ", map1.scenePublic);
       //const geturl = dataelement.getAttribute('data-url')
@@ -284,36 +287,40 @@ export function testmylib(): boolean {
           break;
       }
       console.log("SELECT MAP  =>> ", map1);
-      map1.addSVGExtrudeObject({
-        groupObjects: new THREE.Group(),
-        settingsGroup: {
-          nameGroup: "active",
-          positions: new THREE.Vector3(
-            -700,
-            -220,
-            map1.options.paramsMap?.positions?.z
-          ),
-          scales: new THREE.Vector3(0.5, 0.5, 0.5),
+      const loadActive = await map1.addSVGExtrudeObject(
+        {
+          groupObjects: new THREE.Group(),
+          settingsGroup: {
+            nameGroup: "active",
+            positions: new THREE.Vector3(
+              -700,
+              -220,
+              map1.options.paramsMap?.positions?.z
+            ),
+            scales: new THREE.Vector3(0.5, 0.5, 0.5),
+          },
+          nameLayerSVG: "shops",
+          settingsExtrude: {
+            depth: 6,
+            bevelEnabled: false,
+          },
+          material: new THREE.MeshPhongMaterial({
+            color: 0x111111,
+            specular: 0x666666,
+            emissive: 0x777777,
+            shininess: 6,
+            opacity: 0.9,
+            transparent: false,
+            wireframe: false,
+          }),
+          shadow: {
+            castShadow: true,
+            receiveShadow: false,
+          },
         },
-        nameLayerSVG: "shops",
-        settingsExtrude: {
-          depth: 6,
-          bevelEnabled: false,
-        },
-        material: new THREE.MeshPhongMaterial({
-          color: 0x111111,
-          specular: 0x666666,
-          emissive: 0x777777,
-          shininess: 6,
-          opacity: 0.9,
-          transparent: false,
-          wireframe: false,
-        }),
-        shadow: {
-          castShadow: true,
-          receiveShadow: false,
-        },
-      });
+        selectItem
+      );
+      console.log("loadActive =>> ", loadActive);
       console.log("Scene Public =>> ", map1.scenePublic);
       /*let paramCam: OptionsCam | undefined;
       let paramAmbientLight: OptionsAmbientLight | undefined;
