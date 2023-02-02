@@ -43,6 +43,7 @@ export function testmylib(): boolean {
       baloonTheme
     );
 
+    const btnshclear = document.getElementById("clear");
     const btnsh1 = document.getElementById("viewShop1");
     const btnsh2 = document.getElementById("viewShop2");
     const btnsh3 = document.getElementById("viewShop3");
@@ -51,6 +52,9 @@ export function testmylib(): boolean {
     const btnMap3 = document.getElementById("getMap3");
     const btnMap4 = document.getElementById("getMap4");
     const btnMap5 = document.getElementById("getMap5");
+    btnshclear?.addEventListener("click", () => {
+      clearScene();
+    });
     btnsh1?.addEventListener("click", () => {
       selectShop("Shape-2-50");
     });
@@ -129,6 +133,37 @@ export function testmylib(): boolean {
     groupTree.position.z = 0;
     selectMap("floor-1");
     console.log("START MAP =>> ", map1); */
+    function clearScene(): void {
+      map1.disposeTHREE();
+      const paramCam: OptionsCam = {};
+      const targetCam = new THREE.Vector3(0, 0, 0);
+      map1.start();
+      map1.init();
+      //paramCam.fov = 55;
+      paramCam.aspect = nodeMap!.offsetWidth / nodeMap!.offsetHeight;
+      //paramCam.near = 1;
+      paramCam.far = 20000;
+      paramCam.zoom = 1.0;
+      paramCam.position?.set(3000, 0, 0);
+      let paramAmbientLight: OptionsAmbientLight | undefined;
+      let paramSpotLight: OptionsSpotLight | undefined;
+      let paramPlane: OptionsPlane | undefined;
+      map1.addCamera(paramCam);
+      map1.addAmbientLight(paramAmbientLight);
+      map1.addSpotLight(paramSpotLight);
+      map1.addPlane(paramPlane);
+      addTexts(map1);
+      map1.addControls({
+        isZoom: true,
+        isPan: true,
+        isRotate: false,
+        minDistance: 900,
+        maxDistance: 3000,
+        maxPolarAngle: Math.PI / 1.4,
+        target: targetCam,
+      });
+      selectMap("floor-1");
+    }
     function selectShop(dataelement: any): void {
       console.log("selectShop element = ", dataelement);
       //const geturl = dataelement.getAttribute('data-url')
@@ -144,7 +179,7 @@ export function testmylib(): boolean {
       //const geturl = dataelement.getAttribute('data-url')
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       //nodeMap!.innerHTML = "";
-      const objectDeleted = map1.scenePublic.getObjectByProperty(
+      const objectDeleted = map1.scenePublic?.getObjectByProperty(
         "name",
         "rootMap"
       );

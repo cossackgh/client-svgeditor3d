@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   DataInteractive,
   DataOptions,
@@ -72,38 +74,37 @@ export class ClientSVG3D extends Base {
   static scrollEvent: unknown;
   static selectItem: unknown;
   static hoverCurrentItem: any | undefined;
-  // eslint-disable-next-line prettier/prettier
-  static hoverPrevItem: any 
-    | undefined;
+  static hoverPrevItem: any | undefined;
   currentZoom = 1;
   static INTERSECTED: any;
-  static scene = new THREE.Scene();
+  static scene: THREE.Scene | null = new THREE.Scene();
   public scenePublic = ClientSVG3D.scene;
-  static renderer: THREE.WebGLRenderer;
-  static helper1: THREE.GridHelper;
-  static helper2: THREE.GridHelper;
-  static helper3: THREE.GridHelper;
-  static spotlight: THREE.SpotLight;
-  static camera = new THREE.PerspectiveCamera();
-  static cameraOrtho = new THREE.PerspectiveCamera();
-  static raycaster = new THREE.Raycaster();
-  static pointer = new THREE.Vector2();
-  static controls: OrbitControls;
+  static renderer: THREE.WebGLRenderer | null;
+  static helper1: THREE.GridHelper | null;
+  static helper2: THREE.GridHelper | null;
+  static helper3: THREE.GridHelper | null;
+  static spotlight: THREE.SpotLight | null;
+  static camera: THREE.PerspectiveCamera | null = new THREE.PerspectiveCamera();
+  static cameraOrtho: THREE.PerspectiveCamera | null =
+    new THREE.PerspectiveCamera();
+  static raycaster: THREE.Raycaster | null = new THREE.Raycaster();
+  static pointer: THREE.Vector2 | null = new THREE.Vector2();
+  static controls: OrbitControls | null;
   static mouse = {
     x: 0,
     y: 0,
   };
   static nodeMap: HTMLElement;
-  static mixer: THREE.AnimationMixer;
-  static clock = new THREE.Clock();
-  static loadObject = new THREE.Object3D();
-  static rootMap = new THREE.Group();
-  static groupObjects = new THREE.Group();
-  static groupActive = new THREE.Group();
-  static groupSVGExtrude = new THREE.Group();
-  static groupTexts = new THREE.Group();
-  static outlinePass: OutlinePass;
-  static effect: OutlineEffect;
+  static mixer: THREE.AnimationMixer | null;
+  static clock: THREE.Clock | null = new THREE.Clock();
+  static loadObject: THREE.Object3D | null = new THREE.Object3D();
+  static rootMap: THREE.Group | null = new THREE.Group();
+  static groupObjects: THREE.Group | null = new THREE.Group();
+  static groupActive: THREE.Group | null = new THREE.Group();
+  static groupSVGExtrude: THREE.Group | null = new THREE.Group();
+  static groupTexts: THREE.Group | null = new THREE.Group();
+  static outlinePass: OutlinePass | null;
+  static effect: OutlineEffect | null;
   static place_1_call() {
     console.log("place to call");
     // throw new Error("Method not implemented.");
@@ -168,24 +169,25 @@ export class ClientSVG3D extends Base {
 
   } */
   changeSceneBG(color: string): void {
-    ClientSVG3D.scene.background = new THREE.Color(color);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    ClientSVG3D.scene!.background = new THREE.Color(color);
   }
 
   init(): void {
-    ClientSVG3D.rootMap.name = "rootMap";
-    ClientSVG3D.rootMap.position.x = -1400;
-    ClientSVG3D.rootMap.position.y = -650;
-    ClientSVG3D.rootMap.position.z = 1;
-    ClientSVG3D.rootMap.scale.set(1.0, 1.0, 1.0);
-    ClientSVG3D.scene.add(ClientSVG3D.rootMap);
+    ClientSVG3D.rootMap!.name = "rootMap";
+    ClientSVG3D.rootMap!.position.x = -1400;
+    ClientSVG3D.rootMap!.position.y = -650;
+    ClientSVG3D.rootMap!.position.z = 1;
+    ClientSVG3D.rootMap!.scale.set(1.0, 1.0, 1.0);
+    ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
 
     ClientSVG3D.nodeMap = this.node;
     const container = this.node;
-    if (ClientSVG3D.groupObjects.name === "") {
-      ClientSVG3D.groupObjects.name = "objects";
+    if (ClientSVG3D.groupObjects!.name === "") {
+      ClientSVG3D.groupObjects!.name = "objects";
     }
-    if (ClientSVG3D.groupTexts.name === "") {
-      ClientSVG3D.groupTexts.name = "text";
+    if (ClientSVG3D.groupTexts!.name === "") {
+      ClientSVG3D.groupTexts!.name = "text";
     }
 
     //this.changeSceneBG(this.options?.mapTheme?.colorBG?.toString() || "#000");
@@ -198,7 +200,8 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     ClientSVG3D.renderer.shadowMap.enabled = true;
     container.appendChild(ClientSVG3D.renderer.domElement);
-    ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    ClientSVG3D.renderer.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
     if (ClientSVG3D.DEBUG) console.log("container", container);
     if (ClientSVG3D.DEBUG)
       console.log("ClientSVG3D.renderer.", ClientSVG3D.renderer.domElement);
@@ -273,20 +276,20 @@ export class ClientSVG3D extends Base {
     }); */
   }
   addCamera(optionsCam: OptionsCam | undefined): void {
-    ClientSVG3D.camera.fov = optionsCam?.fov ?? 55;
-    ClientSVG3D.camera.aspect =
+    ClientSVG3D.camera!.fov = optionsCam?.fov ?? 55;
+    ClientSVG3D.camera!.aspect =
       optionsCam?.aspect ?? window.innerWidth / window.innerHeight;
-    ClientSVG3D.camera.near = optionsCam?.near ?? 1;
-    ClientSVG3D.camera.far = optionsCam?.far ?? 2000;
-    ClientSVG3D.camera.zoom = optionsCam?.zoom ?? 1.0;
-    ClientSVG3D.camera.position.set(
+    ClientSVG3D.camera!.near = optionsCam?.near ?? 1;
+    ClientSVG3D.camera!.far = optionsCam?.far ?? 2000;
+    ClientSVG3D.camera!.zoom = optionsCam?.zoom ?? 1.0;
+    ClientSVG3D.camera!.position.set(
       optionsCam?.position?.x ?? 0,
       optionsCam?.position?.y ?? -1500,
       optionsCam?.position?.z ?? 0
     ); // Set position like this
     //ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
     //ClientSVG3D.scene.add(ClientSVG3D.camera);
-    ClientSVG3D.camera.updateProjectionMatrix();
+    ClientSVG3D.camera?.updateProjectionMatrix();
   }
   addAmbientLight(optionsAmbientLight: OptionsAmbientLight | undefined): void {
     const ambiLight = new THREE.AmbientLight(
@@ -294,7 +297,7 @@ export class ClientSVG3D extends Base {
       optionsAmbientLight?.intensity ?? 0.8
     );
     ambiLight.name = optionsAmbientLight?.name ?? "AmbientLight";
-    ClientSVG3D.scene.add(ambiLight);
+    ClientSVG3D.scene?.add(ambiLight);
   }
   addSpotLight(optionsSpotLight: OptionsSpotLight | undefined): void {
     const targetObject = new THREE.Object3D();
@@ -316,11 +319,11 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.spotlight.shadow.mapSize.width = 2048;
     ClientSVG3D.spotlight.shadow.mapSize.height = 2048;
     ClientSVG3D.spotlight.shadow.radius = 2.8;
-    ClientSVG3D.scene.add(targetObject);
+    ClientSVG3D.scene?.add(targetObject);
     targetObject.position.set(-60, -100, -300);
     ClientSVG3D.spotlight.target = targetObject;
     const lightHelper1 = new THREE.SpotLightHelper(ClientSVG3D.spotlight);
-    ClientSVG3D.scene.add(ClientSVG3D.spotlight);
+    ClientSVG3D.scene?.add(ClientSVG3D.spotlight);
     //ClientSVG3D.scene.add(lightHelper1);
   }
   addPlane(optionsPlane: OptionsPlane | undefined): void {
@@ -340,30 +343,30 @@ export class ClientSVG3D extends Base {
     plane.position.z = optionsPlane?.position?.z ?? 0;
     plane.castShadow = optionsPlane?.shadow?.castShadow ?? true;
     plane.receiveShadow = optionsPlane?.shadow?.receiveShadow ?? true;
-    ClientSVG3D.scene.add(plane);
+    ClientSVG3D.scene?.add(plane);
   }
   addHelpers(x: boolean, y: boolean, z: boolean): void {
     if (x) {
       ClientSVG3D.helper1 = new THREE.GridHelper(1600, 30, 0x0000ff, 0x808080);
       ClientSVG3D.helper1.rotation.x = Math.PI / 2;
       ClientSVG3D.helper1.name = "helperX";
-      ClientSVG3D.scene.add(ClientSVG3D.helper1);
+      ClientSVG3D.scene?.add(ClientSVG3D.helper1);
     }
     if (y) {
       ClientSVG3D.helper2 = new THREE.GridHelper(1600, 30, 0x0000ff, 0x808080);
       ClientSVG3D.helper2.rotation.y = Math.PI / 2;
       ClientSVG3D.helper2.name = "helperY";
-      ClientSVG3D.scene.add(ClientSVG3D.helper2);
+      ClientSVG3D.scene?.add(ClientSVG3D.helper2);
     }
     if (z) {
       ClientSVG3D.helper3 = new THREE.GridHelper(600, 30, 0x0000ff, 0x808080);
       ClientSVG3D.helper3.rotation.z = Math.PI / 2;
       ClientSVG3D.helper3.name = "helperZ";
-      ClientSVG3D.scene.add(ClientSVG3D.helper3);
+      ClientSVG3D.scene?.add(ClientSVG3D.helper3);
     }
     const axesHelper = new THREE.AxesHelper(100);
     axesHelper.name = "axesHelper";
-    ClientSVG3D.scene.add(axesHelper);
+    ClientSVG3D.scene?.add(axesHelper);
   }
   addControls({
     isZoom = true,
@@ -376,8 +379,8 @@ export class ClientSVG3D extends Base {
     target = new THREE.Vector3(0, 0, 0),
   }): void {
     ClientSVG3D.controls = new OrbitControls(
-      ClientSVG3D.camera,
-      ClientSVG3D.renderer.domElement
+      ClientSVG3D.camera!,
+      ClientSVG3D.renderer?.domElement
     );
 
     ClientSVG3D.controls.addEventListener("change", this.renderEventControl);
@@ -403,7 +406,7 @@ export class ClientSVG3D extends Base {
   addExample(): void {
     const geometry = new THREE.BoxGeometry(60, 60, 60);
     const colors = new Uint8Array(25);
-    const format = ClientSVG3D.renderer.capabilities.isWebGL2
+    const format = ClientSVG3D.renderer!.capabilities.isWebGL2
       ? THREE.RedFormat
       : THREE.LuminanceFormat;
     for (let c = 0; c <= colors.length; c++) {
@@ -422,7 +425,7 @@ export class ClientSVG3D extends Base {
     const cube = new THREE.Mesh(geometry, materialToon);
     cube.position.set(0, 0, 60);
     cube.castShadow = true;
-    ClientSVG3D.scene.add(cube);
+    ClientSVG3D.scene?.add(cube);
     const sphereGeometry = new THREE.SphereGeometry(40, 20, 20);
     const sphereMaterial = new THREE.MeshPhongMaterial({
       color: "rgb(55,155,155)",
@@ -431,23 +434,23 @@ export class ClientSVG3D extends Base {
     const sphere = new THREE.Mesh(sphereGeometry, materialToon);
     sphere.position.set(0, 0, 40);
     sphere.castShadow = true;
-    ClientSVG3D.scene.add(sphere);
+    ClientSVG3D.scene?.add(sphere);
   }
   async addGLB(options: LoadObject): Promise<void> {
     const classOptions = this.options;
 
     const dracoLoader = new DRACOLoader();
-    ClientSVG3D.groupObjects.position.set(
+    ClientSVG3D.groupObjects!.position.set(
       options.positionGroup?.x as number,
       options.positionGroup?.y as number,
       options.positionGroup?.z as number
     );
-    ClientSVG3D.groupObjects.rotation.set(
+    ClientSVG3D.groupObjects!.rotation.set(
       options.rotationGroup?.x as number,
       options.rotationGroup?.y as number,
       options.rotationGroup?.z as number
     );
-    ClientSVG3D.groupObjects.scale.set(
+    ClientSVG3D.groupObjects!.scale.set(
       options.scaleGroup?.x as number,
       options.scaleGroup?.y as number,
       options.scaleGroup?.z as number
@@ -492,9 +495,9 @@ export class ClientSVG3D extends Base {
 
         //ClientSVG3D.mixer.clipAction(gltf.animations[0]).play();
 
-        ClientSVG3D.groupObjects.add(model);
+        ClientSVG3D.groupObjects?.add(model);
 
-        ClientSVG3D.rootMap.add(ClientSVG3D.groupObjects);
+        ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
         //ClientSVG3D.scene.add(ClientSVG3D.groupObjects);
         ClientSVG3D.render();
       },
@@ -551,8 +554,8 @@ export class ClientSVG3D extends Base {
       if (ClientSVG3D.DEBUG)
         console.log(" ### ==== #### addText textMesh1 = > ", textMesh1);
 
-      ClientSVG3D.groupTexts.add(textMesh1);
-      ClientSVG3D.rootMap.add(ClientSVG3D.groupTexts);
+      ClientSVG3D.groupTexts?.add(textMesh1);
+      ClientSVG3D.rootMap?.add(ClientSVG3D.groupTexts!);
       //ClientSVG3D.scene.add(ClientSVG3D.groupTexts);
       ClientSVG3D.render();
       if (ClientSVG3D.DEBUG)
@@ -627,7 +630,7 @@ export class ClientSVG3D extends Base {
             }
           }
         }
-        ClientSVG3D.rootMap.add(ClientSVG3D.groupActive);
+        ClientSVG3D.rootMap?.add(ClientSVG3D.groupActive!);
         //ClientSVG3D.scene.add(ClientSVG3D.rootMap);
         ClientSVG3D.render();
       },
@@ -708,8 +711,8 @@ export class ClientSVG3D extends Base {
                   //object: object,
                 }); */
               }
-              ClientSVG3D.groupObjects.add(object);
-              ClientSVG3D.rootMap.add(ClientSVG3D.groupObjects);
+              ClientSVG3D.groupObjects?.add(object);
+              ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
               ClientSVG3D.render();
               if (ClientSVG3D.DEBUG)
                 console.log("ADD OBJECT SCENE = ", ClientSVG3D.scene);
@@ -797,8 +800,8 @@ export class ClientSVG3D extends Base {
               child.castShadow = true;
               child.receiveShadow = true;
             }
-            ClientSVG3D.groupObjects.add(object);
-            ClientSVG3D.rootMap.add(ClientSVG3D.groupObjects);
+            ClientSVG3D.groupObjects?.add(object);
+            ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
             ClientSVG3D.render();
             if (ClientSVG3D.DEBUG) console.log("SCENE LOAD OBJECT = ", object);
             if (ClientSVG3D.DEBUG)
@@ -955,7 +958,7 @@ export class ClientSVG3D extends Base {
             }
           }
         }
-        ClientSVG3D.rootMap.add(groupSVGExtrude);
+        ClientSVG3D.rootMap?.add(groupSVGExtrude);
         ClientSVG3D.render();
         if (selectItems.length > 0) {
           selectItems.forEach((item: string) => {
@@ -988,7 +991,7 @@ export class ClientSVG3D extends Base {
       this.clearColorActive();
     }
     const id = item;
-    const group = ClientSVG3D.scene.getObjectByName("active");
+    const group = ClientSVG3D.scene?.getObjectByName("active");
 
     if (ClientSVG3D.DEBUG)
       console.log("selectItem ClientSVG3D.scene => ", ClientSVG3D.scene);
@@ -1060,22 +1063,22 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.mouse.y =
       -((event.offsetY + 0) / container?.offsetHeight) * 2 + 1;
 
-    ClientSVG3D.raycaster.setFromCamera(
-      ClientSVG3D.pointer,
-      ClientSVG3D.camera
+    ClientSVG3D.raycaster?.setFromCamera(
+      ClientSVG3D.pointer!,
+      ClientSVG3D.camera!
     );
     const vector = new THREE.Vector3(
       ClientSVG3D.mouse.x,
       ClientSVG3D.mouse.y,
       1
     );
-    vector.unproject(ClientSVG3D.camera);
+    vector.unproject(ClientSVG3D.camera!);
     const ray = new THREE.Raycaster(
-      ClientSVG3D.camera.position,
-      vector.sub(ClientSVG3D.camera.position).normalize()
+      ClientSVG3D.camera!.position,
+      vector.sub(ClientSVG3D.camera!.position).normalize()
     );
 
-    const groupActive = ClientSVG3D.scene.getObjectByName("active");
+    const groupActive = ClientSVG3D.scene?.getObjectByName("active");
     //console.log("groupActive = ", groupActive?.children);
     //console.log("ClientSVG3D.scene.children = ", ClientSVG3D.scene.children);
     const intersects = ray.intersectObjects(groupActive!.children, true);
@@ -1108,7 +1111,7 @@ export class ClientSVG3D extends Base {
         ClientSVG3D.INTERSECTED = intersects[0].object;
         if (ClientSVG3D.DEBUG)
           console.log("MOUSE OVER", intersects[0].object.name);
-        const groupActive = ClientSVG3D.scene.getObjectByName("active");
+        const groupActive = ClientSVG3D.scene?.getObjectByName("active");
         groupActive?.children.forEach((element) => {
           (element as THREE.Mesh).material = new THREE.MeshPhongMaterial({
             color: 0x111111,
@@ -1128,7 +1131,7 @@ export class ClientSVG3D extends Base {
                ClientSVG3D.INTERSECTED.material.color =
           ClientSVG3D.INTERSECTED.currentHex; */
 
-      const groupActive = ClientSVG3D.scene.getObjectByName("active");
+      const groupActive = ClientSVG3D.scene?.getObjectByName("active");
       //console.log("MOUSE OUT", groupActive?.children);
       groupActive?.children.forEach((element) => {
         (element as THREE.Mesh).material = new THREE.MeshPhongMaterial({
@@ -1149,11 +1152,11 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.render();
   }
   static render(): void {
-    ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
-    const delta = ClientSVG3D.clock.getDelta();
+    ClientSVG3D.renderer?.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
+    const delta = ClientSVG3D.clock?.getDelta();
 
     if (ClientSVG3D.mixer) {
-      ClientSVG3D.mixer.update(delta);
+      ClientSVG3D.mixer.update(delta!);
     }
     //ClientSVG3D.effect.render(ClientSVG3D.scene, ClientSVG3D.camera);
     /* console.log("render");
@@ -1162,7 +1165,7 @@ export class ClientSVG3D extends Base {
   }
   clearColorActive(): void {
     if (ClientSVG3D.DEBUG) console.log("clearColorActive");
-    const groupActive = ClientSVG3D.scene.getObjectByName("active");
+    const groupActive = ClientSVG3D.scene?.getObjectByName("active");
     const materialClear = new THREE.MeshPhongMaterial({
       color: 0x111111,
       specular: 0x666666,
@@ -1188,7 +1191,7 @@ export class ClientSVG3D extends Base {
   }
   renderEventControl() {
     if (ClientSVG3D.DEBUG) console.log("renderEventControl");
-    ClientSVG3D.renderer?.render(ClientSVG3D.scene, ClientSVG3D.camera);
+    ClientSVG3D.renderer?.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
   }
   /*   static myMouseMove(ev: MouseEvent) {
     ev.preventDefault();
@@ -1203,6 +1206,23 @@ export class ClientSVG3D extends Base {
 
     const getSVGData = await loadSVGFile(urlSVG);
     // console.log("getSVGData = ", getSVGData);
+  }
+  disposeTHREE() {
+    this.clearThree(ClientSVG3D.scene);
+    ClientSVG3D.scene = null;
+    ClientSVG3D.camera = null;
+    ClientSVG3D.renderer = null;
+    ClientSVG3D.controls = null;
+    ClientSVG3D.raycaster = null;
+    ClientSVG3D.INTERSECTED = null;
+    ClientSVG3D.clock = null;
+    ClientSVG3D.mixer = null;
+    ClientSVG3D.effect = null;
+    /* ClientSVG3D.composer = null;
+    ClientSVG3D.renderPass = null; */
+    ClientSVG3D.outlinePass = null;
+    ClientSVG3D.scene = new THREE.Scene();
+    console.log("disposeTHREE = ", ClientSVG3D.scene);
   }
   clearThree(obj: any) {
     while (obj.children.length > 0) {
@@ -1225,11 +1245,11 @@ export class ClientSVG3D extends Base {
     }
   }
   onWindowResize() {
-    ClientSVG3D.camera.aspect = window.innerWidth / window.innerHeight;
-    ClientSVG3D.camera.updateProjectionMatrix();
+    ClientSVG3D.camera!.aspect = window.innerWidth / window.innerHeight;
+    ClientSVG3D.camera?.updateProjectionMatrix();
 
-    ClientSVG3D.renderer.setSize(window.innerWidth, window.innerHeight);
-    ClientSVG3D.controls.update();
+    ClientSVG3D.renderer?.setSize(window.innerWidth, window.innerHeight);
+    ClientSVG3D.controls?.update();
     ClientSVG3D.render();
   }
 
@@ -1241,9 +1261,9 @@ export class ClientSVG3D extends Base {
     if (ClientSVG3D.DEBUG) console.log("animate");
 
     if (ClientSVG3D.mixer !== undefined)
-      ClientSVG3D.mixer.update(ClientSVG3D.clock.getDelta());
+      ClientSVG3D.mixer?.update(ClientSVG3D.clock!.getDelta());
     //requestAnimationFrame(ClientSVG3D.animate);
-    ClientSVG3D.controls.update();
+    ClientSVG3D.controls?.update();
     ClientSVG3D.render();
   }
 }
