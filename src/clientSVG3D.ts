@@ -77,14 +77,14 @@ export class ClientSVG3D extends Base {
   static hoverPrevItem: any | undefined;
   currentZoom = 1;
   static INTERSECTED: any;
-  static scene: THREE.Scene | null = new THREE.Scene();
-  public scenePublic = ClientSVG3D.scene;
+  static scene: THREE.Scene | null;
+  public scenePublic: THREE.Scene | null | undefined;
   static renderer: THREE.WebGLRenderer | null;
   static helper1: THREE.GridHelper | null;
   static helper2: THREE.GridHelper | null;
   static helper3: THREE.GridHelper | null;
   static spotlight: THREE.SpotLight | null;
-  static camera: THREE.PerspectiveCamera | null = new THREE.PerspectiveCamera();
+  static camera: THREE.PerspectiveCamera | null;
   static cameraOrtho: THREE.PerspectiveCamera | null =
     new THREE.PerspectiveCamera();
   static raycaster: THREE.Raycaster | null = new THREE.Raycaster();
@@ -200,6 +200,7 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     ClientSVG3D.renderer.shadowMap.enabled = true;
     container.appendChild(ClientSVG3D.renderer.domElement);
+    console.log("ClientSVG3D.camera! #### ", ClientSVG3D.camera!);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     ClientSVG3D.renderer.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
     if (ClientSVG3D.DEBUG) console.log("container", container);
@@ -1021,6 +1022,9 @@ export class ClientSVG3D extends Base {
     //this.clearThree(ClientSVG3D.scene);
     //this.init();
     //this.animate();
+    ClientSVG3D.scene = new THREE.Scene();
+    this.scenePublic = ClientSVG3D.scene;
+    ClientSVG3D.camera = new THREE.PerspectiveCamera();
     window.addEventListener("resize", this.onWindowResize);
     //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);
     if (ClientSVG3D.DEBUG) console.log("start  this.options", this.options);

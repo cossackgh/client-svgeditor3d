@@ -185,7 +185,8 @@ export function testmylib(): boolean {
       );
       switch (floorMap) {
         case "floor-1":
-          map1.clearThree(objectDeleted);
+          console.log("objectDeleted =>> ", objectDeleted);
+          if (objectDeleted !== undefined) map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-1-final.svg";
           map1.options.paramsMap = {
             positions: new THREE.Vector3(0, 0, 5),
