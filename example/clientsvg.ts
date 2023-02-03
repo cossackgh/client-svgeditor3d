@@ -134,6 +134,7 @@ export function testmylib(): boolean {
     selectMap("floor-1");
     console.log("START MAP =>> ", map1); */
     function clearScene(): void {
+      nodeMap!.innerHTML = "";
       map1.disposeTHREE();
       const paramCam: OptionsCam = {};
       const targetCam = new THREE.Vector3(0, 0, 0);
