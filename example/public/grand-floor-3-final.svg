@@ -59,15 +59,15 @@
    inkscape:pagecheckerboard="0"
    inkscape:deskcolor="#d1d1d1"
    showgrid="false"
-   inkscape:zoom="0.61572683"
-   inkscape:cx="825.85324"
-   inkscape:cy="694.30139"
+   inkscape:zoom="0.30786342"
+   inkscape:cx="776.31829"
+   inkscape:cy="764.94961"
    inkscape:window-width="1426"
    inkscape:window-height="769"
    inkscape:window-x="1927"
-   inkscape:window-y="86"
+   inkscape:window-y="33"
    inkscape:window-maximized="0"
-   inkscape:current-layer="svg755084" />
+   inkscape:current-layer="layer4" />
 <g
    id="wall"
    style="display:inline">
@@ -481,20 +481,15 @@
    id="layer4"
    inkscape:label="terminals"><circle
      style="fill:#ffffff;stroke:#050000;stroke-width:1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-     id="t-8"
+     id="t-08"
      cx="1299.4258"
      cy="475.44168"
      r="5" /><circle
      style="fill:#ffffff;stroke:#050000;stroke-width:1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-     id="t-7"
+     id="t-07"
      cx="1963.5331"
      cy="457.18326"
-     r="5" /></g><circle
-   style="fill:#ffffff;stroke:#050000;stroke-width:1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-   id="t-9"
-   cx="2288.2065"
-   cy="651.43549"
-   r="5" />
+     r="5" /></g>
 <g
    id="floor"
    style="display:inline">
