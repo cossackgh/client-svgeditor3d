@@ -237,6 +237,41 @@ export interface OptionsAmbientLight {
   color?: THREE.ColorRepresentation | undefined;
   intensity?: number | undefined;
 }
+export interface SphereParams {
+  radius?: number;
+  widthSegments?: number;
+  heightSegments?: number;
+  material?:
+    | THREE.MeshBasicMaterial
+    | THREE.MeshLambertMaterial
+    | THREE.MeshPhongMaterial;
+  position?: THREE.Vector3;
+  rotation?: THREE.Vector3;
+  scale?: THREE.Vector3;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
+export interface BoxParams {
+  width?: number;
+  height?: number;
+  depth?: number;
+  widthSegments?: number;
+  heightSegments?: number;
+  depthSegments?: number;
+  material?:
+    | THREE.MeshBasicMaterial
+    | THREE.MeshLambertMaterial
+    | THREE.MeshPhongMaterial;
+  position?: THREE.Vector3;
+  rotation?: THREE.Vector3;
+  scale?: THREE.Vector3;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
 export interface OptionsSpotLight {
   name?: string;
   color?: THREE.ColorRepresentation | undefined;

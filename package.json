@@ -1,6 +1,6 @@
 {
   "name": "svgeditor-client3d",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Create 3D scenes from SVG files",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

@@ -15,6 +15,8 @@ import type {
   OptionsSpotLight,
   OptionsAmbientLight,
   OptionsPlane,
+  BoxParams,
+  SphereParams,
 } from "./models/simple.models";
 //import { SvgMap } from './_privatemodule/svg'
 import Base from "./base";
@@ -403,6 +405,55 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.controls.target = target;
     ClientSVG3D.controls.update();
     //ClientSVG3D.controls.reset();
+  }
+  addBox(boxparams: BoxParams): THREE.Mesh {
+    const geometry = new THREE.BoxGeometry(
+      boxparams.height ?? 100,
+      boxparams.width ?? 100,
+      boxparams.depth ?? 100
+    );
+    const materialBox = boxparams.material ?? new THREE.MeshPhongMaterial();
+    const cube = new THREE.Mesh(geometry, materialBox);
+    cube.position.set(
+      boxparams.position!.x ?? 0,
+      boxparams.position!.y ?? 0,
+      boxparams.position!.z ?? 0
+    );
+    cube.rotation.set(
+      boxparams.rotation!.x ?? 0,
+      boxparams.rotation!.y ?? 0,
+      boxparams.rotation!.z ?? 0
+    );
+    cube.castShadow = boxparams.shadow?.castShadow ?? true;
+    cube.receiveShadow = boxparams.shadow?.receiveShadow ?? true;
+    ClientSVG3D.rootMap?.add(cube);
+    ClientSVG3D.render();
+    return cube;
+  }
+  addSphere(sphereparams: SphereParams): THREE.Mesh {
+    const geometry = new THREE.BoxGeometry(
+      sphereparams.radius ?? 10,
+      sphereparams.widthSegments ?? 32,
+      sphereparams.heightSegments ?? 16
+    );
+    const materialSphere =
+      sphereparams.material ?? new THREE.MeshPhongMaterial();
+    const sphere = new THREE.Mesh(geometry, materialSphere);
+    sphere.position.set(
+      sphereparams.position!.x ?? 0,
+      sphereparams.position!.y ?? 0,
+      sphereparams.position!.z ?? 0
+    );
+    sphere.rotation.set(
+      sphereparams.rotation!.x ?? 0,
+      sphereparams.rotation!.y ?? 0,
+      sphereparams.rotation!.z ?? 0
+    );
+    sphere.castShadow = sphereparams.shadow?.castShadow ?? true;
+    sphere.receiveShadow = sphereparams.shadow?.receiveShadow ?? true;
+    ClientSVG3D.rootMap?.add(sphere);
+    ClientSVG3D.render();
+    return sphere;
   }
   addExample(): void {
     const geometry = new THREE.BoxGeometry(60, 60, 60);
