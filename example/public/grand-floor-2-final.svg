@@ -11,30 +11,8 @@
    viewBox="0 0 2600 1200"
    style="enable-background:new 0 0 2600 1200;"
    xml:space="preserve"
-   sodipodi:docname="grand-floor-2-final.svg"
-   inkscape:version="1.2.2 (b0a8486, 2022-12-01)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
-   id="namedview2131"
-   pagecolor="#ffffff"
-   bordercolor="#000000"
-   borderopacity="0.25"
-   inkscape:showpageshadow="2"
-   inkscape:pageopacity="0.0"
-   inkscape:pagecheckerboard="0"
-   inkscape:deskcolor="#d1d1d1"
-   showgrid="false"
-   inkscape:zoom="0.39653846"
-   inkscape:cx="1296.2173"
-   inkscape:cy="600.19399"
-   inkscape:window-width="1424"
-   inkscape:window-height="766"
-   inkscape:window-x="1936"
-   inkscape:window-y="25"
-   inkscape:window-maximized="0"
-   inkscape:current-layer="layer3" /><defs
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
    id="defs124619" />
 <g
    id="wall"
@@ -801,9 +779,7 @@
    cy="1029.2371"
    r="6.1276598" />
 </g><g
-   inkscape:groupmode="layer"
-   id="layer3"
-   inkscape:label="terminals"><circle
+   id="terminals"><circle
      style="enable-background:new 0 0 2600 1200;fill:#ffffff;stroke:#050000;stroke-width:1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
      id="t-12"
      cx="840.43835"
