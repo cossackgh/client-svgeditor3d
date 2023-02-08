@@ -179,6 +179,17 @@ export interface OptionsExtrudeObject {
 export interface ParametersStart {
   layaerActive?: string;
 }
+export interface PolilineOptions {
+  points?: THREE.Vector3[];
+  color?: string | number;
+  thin?: number;
+  isAnimation?: boolean;
+  isLoopAnimation?: boolean;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
 export interface TextOptions {
   text?: string;
   color?: string | number;

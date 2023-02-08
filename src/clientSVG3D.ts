@@ -17,6 +17,7 @@ import type {
   OptionsPlane,
   BoxParams,
   SphereParams,
+  PolilineOptions,
 } from "./models/simple.models";
 //import { SvgMap } from './_privatemodule/svg'
 import Base from "./base";
@@ -558,6 +559,19 @@ export class ClientSVG3D extends Base {
         console.error(e);
       }
     );
+  }
+  addPoliline(options: PolilineOptions): void {
+    const points = [];
+    for (let idx = 0; idx < options.points!.length; idx++) {
+      const element = options.points![idx];
+      points.push(new THREE.Vector3(element.x, element.y, element.z));
+    }
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ color: options.color });
+    const line = new THREE.Line(geometry, material);
+    ClientSVG3D.groupObjects?.add(line);
+    ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
+    ClientSVG3D.render();
   }
   addText(optionsText: TextOptions): void {
     const loader = new FontLoader();
