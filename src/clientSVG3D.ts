@@ -1312,11 +1312,14 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
     console.log("render");
   } */
-  animate() {
+  animate(loop = false) {
     if (ClientSVG3D.DEBUG) console.log("animate");
 
     if (ClientSVG3D.mixer !== undefined)
       ClientSVG3D.mixer?.update(ClientSVG3D.clock!.getDelta());
+    if (loop) {
+      requestAnimationFrame(() => this.animate(loop));
+    }
     //requestAnimationFrame(ClientSVG3D.animate);
     ClientSVG3D.controls?.update();
     ClientSVG3D.render();
