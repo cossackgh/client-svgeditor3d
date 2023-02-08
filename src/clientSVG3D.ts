@@ -17,11 +17,10 @@ import type {
   OptionsPlane,
   BoxParams,
   SphereParams,
-  PolilineOptions,
+  PolylineOptions,
 } from "./models/simple.models";
 //import { SvgMap } from './_privatemodule/svg'
 import Base from "./base";
-//import { Scene } from "three";
 import * as THREE from "three";
 import { SVGLoader } from "./SVGLoader";
 import { OBJLoader } from "./OBJLoader";
@@ -560,7 +559,7 @@ export class ClientSVG3D extends Base {
       }
     );
   }
-  addPoliline(options: PolilineOptions): void {
+  addPolyline(options: PolylineOptions): void {
     const points = [];
     for (let idx = 0; idx < options.points!.length; idx++) {
       const element = options.points![idx];

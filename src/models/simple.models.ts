@@ -179,7 +179,7 @@ export interface OptionsExtrudeObject {
 export interface ParametersStart {
   layaerActive?: string;
 }
-export interface PolilineOptions {
+export interface PolylineOptions {
   points?: THREE.Vector3[];
   color?: string | number;
   thin?: number;
