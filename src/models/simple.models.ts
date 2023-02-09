@@ -179,6 +179,17 @@ export interface OptionsExtrudeObject {
 export interface ParametersStart {
   layaerActive?: string;
 }
+export interface TubeOptions {
+  points?: THREE.Vector3[];
+  color?: string | number;
+  tubularSegments?: number;
+  radius?: number;
+  radiusSegments?: number;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
 export interface PolylineOptions {
   points?: THREE.Vector3[];
   color?: string | number;

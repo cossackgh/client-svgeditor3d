@@ -18,6 +18,7 @@ import type {
   BoxParams,
   SphereParams,
   PolylineOptions,
+  TubeOptions,
 } from "./models/simple.models";
 //import { SvgMap } from './_privatemodule/svg'
 import Base from "./base";
@@ -559,6 +560,26 @@ export class ClientSVG3D extends Base {
       }
     );
   }
+  addTubePath(options: TubeOptions): void {
+    const points = [];
+    for (let idx = 0; idx < options.points!.length; idx++) {
+      const element = options.points![idx];
+      points.push(new THREE.Vector3(element.x, element.y, element.z));
+    }
+    const geometry = new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(points),
+      options.tubularSegments ?? 64,
+      options.radius as number,
+      options.radiusSegments ?? 8,
+      false
+    );
+    const material = new THREE.MeshBasicMaterial({ color: options.color });
+    const tube = new THREE.Mesh(geometry, material);
+    tube.castShadow = options.shadow?.castShadow ?? false;
+    tube.receiveShadow = options.shadow?.receiveShadow ?? false;
+    ClientSVG3D.groupObjects?.add(tube);
+  }
+  
   addPolyline(options: PolylineOptions): void {
     const points = [];
     for (let idx = 0; idx < options.points!.length; idx++) {
@@ -568,6 +589,9 @@ export class ClientSVG3D extends Base {
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     const material = new THREE.LineBasicMaterial({ color: options.color });
     const line = new THREE.Line(geometry, material);
+
+    line.castShadow = options.shadow?.castShadow ?? false;
+    line.receiveShadow = options.shadow?.receiveShadow ?? false;
     ClientSVG3D.groupObjects?.add(line);
     ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
     ClientSVG3D.render();
