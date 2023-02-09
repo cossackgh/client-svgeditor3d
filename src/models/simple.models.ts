@@ -182,6 +182,10 @@ export interface ParametersStart {
 export interface TubeOptions {
   points?: THREE.Vector3[];
   color?: string | number;
+  material?:
+    | THREE.MeshBasicMaterial
+    | THREE.MeshLambertMaterial
+    | THREE.MeshPhongMaterial;
   tubularSegments?: number;
   radius?: number;
   radiusSegments?: number;
@@ -196,6 +200,10 @@ export interface TubeOptions {
 export interface PolylineOptions {
   points?: THREE.Vector3[];
   color?: string | number;
+  material?:
+    | THREE.MeshBasicMaterial
+    | THREE.MeshLambertMaterial
+    | THREE.MeshPhongMaterial;
   thin?: number;
   isAnimation?: boolean;
   isLoopAnimation?: boolean;

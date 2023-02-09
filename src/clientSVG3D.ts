@@ -578,13 +578,15 @@ export class ClientSVG3D extends Base {
       options.radiusSegments ?? 8,
       false
     );
-    const material = new THREE.MeshBasicMaterial({ color: options.color });
+    const material =
+      options.material ?? new THREE.MeshBasicMaterial({ color: options.color });
     const tube = new THREE.Mesh(geometry, material);
     tube.castShadow = options.shadow?.castShadow ?? false;
     tube.receiveShadow = options.shadow?.receiveShadow ?? false;
     ClientSVG3D.groupObjects?.add(tube);
+    ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
+    ClientSVG3D.render();
   }
-  
   addPolyline(options: PolylineOptions): void {
     const points = [];
     for (let idx = 0; idx < options.points!.length; idx++) {
