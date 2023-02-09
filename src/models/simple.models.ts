@@ -185,6 +185,9 @@ export interface TubeOptions {
   tubularSegments?: number;
   radius?: number;
   radiusSegments?: number;
+  curveClosed?: boolean;
+  curveType?: string;
+  curveTension?: number;
   shadow?: {
     castShadow?: boolean;
     receiveShadow?: boolean;

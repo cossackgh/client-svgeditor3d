@@ -567,7 +567,12 @@ export class ClientSVG3D extends Base {
       points.push(new THREE.Vector3(element.x, element.y, element.z));
     }
     const geometry = new THREE.TubeGeometry(
-      new THREE.CatmullRomCurve3(points),
+      new THREE.CatmullRomCurve3(
+        points,
+        options.curveClosed ?? false,
+        options.curveType ?? "centripetal",
+        options.curveTension ?? 0.5
+      ),
       options.tubularSegments ?? 64,
       options.radius as number,
       options.radiusSegments ?? 8,
