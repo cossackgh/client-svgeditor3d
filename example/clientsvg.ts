@@ -196,6 +196,14 @@ export function testmylib(): boolean {
           };
           addWall(map1, "floor-1");
           addFloor(map1, "floor-1");
+          map1.addObject({
+            nameObject: "cafe-01",
+            urlOBJ: "./public/3dobj/obj/cafe-1.obj",
+            urlMTL: "./public/3dobj/obj/cafe-1.mtl",
+            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 4, 0),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            position: new THREE.Vector3(1828, 668, 10),
+          });
           console.log("SELECT MAP 1 =>> ", map1);
           break;
         case "floor-2":
@@ -208,14 +216,8 @@ export function testmylib(): boolean {
           };
           addWall(map1, "floor-2");
           addFloor(map1, "floor-2");
-          /* map1.addObject({
-            urlOBJ: "./public/3dobj/obj/cafe.obj",
-            urlMTL: "./public/3dobj/obj/cafe.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 4, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(380, -40, 27),
-          });
-          map1.addObject({
+
+          /*  map1.addObject({
             urlOBJ: "./public/3dobj/obj/cafe.obj",
             urlMTL: "./public/3dobj/obj/cafe.mtl",
             rotation: new THREE.Vector3(Math.PI / 2, 0, 0),

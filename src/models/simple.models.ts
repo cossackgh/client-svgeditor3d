@@ -40,7 +40,7 @@ export interface DataOptions {
   interactiveLayer?: string;
   isRemoveUnuseItem?: boolean;
   isHoverEnable?: boolean;
-  funcClick?: Function;
+  funcClick?: () => void;
   funcParams?: any;
   paramsMap?: ParamsMap;
 }
@@ -131,6 +131,7 @@ export interface MapTheme {
 }
 export interface LoadObject {
   nameLayer?: string;
+  nameObject?: string;
   urlMTL?: string;
   urlOBJ: string;
   color?: string | number;
@@ -274,6 +275,27 @@ export interface SphereParams {
   radius?: number;
   widthSegments?: number;
   heightSegments?: number;
+  material?:
+    | THREE.MeshBasicMaterial
+    | THREE.MeshLambertMaterial
+    | THREE.MeshPhongMaterial;
+  position?: THREE.Vector3;
+  rotation?: THREE.Vector3;
+  scale?: THREE.Vector3;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
+export interface CylinderParams {
+  radiusTop?: number;
+  radiusBottom?: number;
+  height?: number;
+  radialSegments?: number;
+  heightSegments?: number;
+  openEnded?: boolean;
+  thetaStart?: number;
+  thetaLength?: number;
   material?:
     | THREE.MeshBasicMaterial
     | THREE.MeshLambertMaterial

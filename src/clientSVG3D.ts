@@ -16,6 +16,7 @@ import type {
   OptionsAmbientLight,
   OptionsPlane,
   BoxParams,
+  CylinderParams,
   SphereParams,
   PolylineOptions,
   TubeOptions,
@@ -407,6 +408,35 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.controls.update();
     //ClientSVG3D.controls.reset();
   }
+  addCylider(cylparams: CylinderParams): THREE.Mesh {
+    const geometry = new THREE.CylinderGeometry(
+      cylparams.radiusTop ?? 100,
+      cylparams.radiusBottom ?? 100,
+      cylparams.height ?? 12,
+      cylparams.radialSegments ?? 8,
+      cylparams.heightSegments ?? 1,
+      cylparams.openEnded ?? false,
+      cylparams.thetaStart ?? 0,
+      cylparams.thetaLength ?? Math.PI * 2
+    );
+    const materialBox = cylparams.material ?? new THREE.MeshPhongMaterial();
+    const cylinder = new THREE.Mesh(geometry, materialBox);
+    cylinder.position.set(
+      cylparams.position!.x ?? 0,
+      cylparams.position!.y ?? 0,
+      cylparams.position!.z ?? 0
+    );
+    cylinder.rotation.set(
+      cylparams.rotation!.x ?? 0,
+      cylparams.rotation!.y ?? 0,
+      cylparams.rotation!.z ?? 0
+    );
+    cylinder.castShadow = cylparams.shadow?.castShadow ?? true;
+    cylinder.receiveShadow = cylparams.shadow?.receiveShadow ?? true;
+    ClientSVG3D.rootMap?.add(cylinder);
+    ClientSVG3D.render();
+    return cylinder;
+  }
   addBox(boxparams: BoxParams): THREE.Mesh {
     const geometry = new THREE.BoxGeometry(
       boxparams.height ?? 100,
@@ -761,11 +791,12 @@ export class ClientSVG3D extends Base {
             options.urlOBJ,
             (object: THREE.Object3D<THREE.Event>) => {
               object.traverse((child: any) => {
-                /*console.log(
-                  " ### ==== #### addObjects load OBJ With Material = > ",
-                  child
-                );
-                 console.log(
+                if (ClientSVG3D.DEBUG)
+                  console.log(
+                    " ### ==== #### addObjects load OBJ With Material = > ",
+                    child
+                  );
+                /* console.log(
                   " ### ==== #### addObjects materialsCar = > ",
                   materialsCar
                 ); */
@@ -793,6 +824,7 @@ export class ClientSVG3D extends Base {
                     options.position?.y,
                     options.position?.z
                   );
+
                   child.castShadow = true;
                   child.receiveShadow = false;
                 }
@@ -807,6 +839,7 @@ export class ClientSVG3D extends Base {
                   //object: object,
                 }); */
               }
+              object.name = options.nameObject ?? "Object";
               ClientSVG3D.groupObjects?.add(object);
               ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
               ClientSVG3D.render();
@@ -896,6 +929,7 @@ export class ClientSVG3D extends Base {
               child.castShadow = true;
               child.receiveShadow = true;
             }
+            object.name = options.nameObject ?? "Object";
             ClientSVG3D.groupObjects?.add(object);
             ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
             ClientSVG3D.render();
@@ -1094,6 +1128,7 @@ export class ClientSVG3D extends Base {
     if (group) {
       const mesh = group.getObjectByName(id);
       if (ClientSVG3D.DEBUG) console.log("selectItem group => ", group);
+      if (ClientSVG3D.DEBUG) console.log("selectItem mesh => ", mesh);
       if (mesh) {
         (mesh as THREE.Mesh).material = new THREE.MeshPhongMaterial({
           color: 0xff1111,

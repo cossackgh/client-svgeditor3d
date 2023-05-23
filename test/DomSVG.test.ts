@@ -1,4 +1,4 @@
-import { ClientSVGEditor } from '../src/index'
+import { ClientSVG3D } from '../src/index'
 
 /* test('add', () => {
   expect(new DomSVG(5).add(new DomSVG(6)).val()).toBe(11)
