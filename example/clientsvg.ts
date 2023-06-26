@@ -10,7 +10,7 @@ import { dataShops2 } from "./dataItems";
 
 import * as THREE from "three";
 
-export function testmylib(): boolean {
+export async function testmylib(): Promise<boolean> {
   console.log("testmylib");
   const nodeMap = document.getElementById("map3d");
 
@@ -30,6 +30,8 @@ export function testmylib(): boolean {
         isDebug: true, // isDebug - debug mode
         isHoverEnable: true, // isDebug - debug mode
         title: "Пример карты", // Head Title this map
+        signsLayer: "#signsLayer", // Layer name for signs
+        objectsLayer: "#objectsL", // Layer name for objects
         interactiveLayer: "shops", // Layer name for interactive
         urlmap: "./public/grand-floor-1-final.svg", // Path to map svg
         isRemoveUnuseItem: false, // Remove unuse item from map?
@@ -52,6 +54,9 @@ export function testmylib(): boolean {
     const btnMap3 = document.getElementById("getMap3");
     const btnMap4 = document.getElementById("getMap4");
     const btnMap5 = document.getElementById("getMap5");
+    const btnSelect1 = document.getElementById("selectObj1");
+    const btnSelect2 = document.getElementById("selectObj2");
+    const btnClearSelect = document.getElementById("clearSelection");
     btnshclear?.addEventListener("click", () => {
       clearScene();
     });
@@ -89,6 +94,21 @@ export function testmylib(): boolean {
       btnMap5.classList.add("active");
       selectMap("floor-5");
     });
+    btnSelect1?.addEventListener("click", () => {
+      clearActiveFloor();
+      btnSelect1.classList.add("active");
+      selectObject(["sign-2", "sign-3"]);
+    });
+    btnSelect2?.addEventListener("click", () => {
+      clearActiveFloor();
+      clearSelectObject(map1);
+      btnSelect2.classList.add("active");
+      selectObject(["sign-1", "sign-3"]);
+    });
+    btnClearSelect?.addEventListener("click", () => {
+      clearSelectObject(map1);
+      btnClearSelect.classList.add("active");
+    });
 
     function clearActiveFloor(): void {
       const btns = document.querySelectorAll(".btn__map_floor");
@@ -99,9 +119,7 @@ export function testmylib(): boolean {
 
     const paramCam: OptionsCam = {};
     const targetCam = new THREE.Vector3(0, 0, 0);
-    map1.start();
-    map1.init();
-    //paramCam.fov = 55;
+    paramCam.fov = 55;
     paramCam.aspect = nodeMap.offsetWidth / nodeMap.offsetHeight;
     //paramCam.near = 1;
     paramCam.far = 20000;
@@ -110,21 +128,34 @@ export function testmylib(): boolean {
     let paramAmbientLight: OptionsAmbientLight | undefined;
     let paramSpotLight: OptionsSpotLight | undefined;
     let paramPlane: OptionsPlane | undefined;
-    map1.addCamera(paramCam);
-    map1.addAmbientLight(paramAmbientLight);
-    map1.addSpotLight(paramSpotLight);
-    map1.addPlane(paramPlane);
-    addTexts(map1);
-    map1.addControls({
-      isZoom: true,
-      isPan: true,
-      isRotate: false,
-      minDistance: 900,
-      maxDistance: 3000,
-      maxPolarAngle: Math.PI / 1.4,
-      target: targetCam,
-    });
-    selectMap("floor-1");
+
+    await startClient();
+    async function startClient() {
+      console.log("START MAP =>> ", map1);
+      //nodeMap!.innerHTML = "";
+
+      const startS = await map1.runLoadSVG();
+      /* const startS = await map1.start();*/
+      const initS = await map1.init();
+      console.log("START MAP startS =>> ", startS);
+      console.log("START MAP initS =>> ", initS);
+
+      map1.addCamera(paramCam);
+      map1.addAmbientLight(paramAmbientLight);
+      map1.addSpotLight(paramSpotLight);
+      map1.addPlane(paramPlane);
+      addTexts(map1);
+      map1.addControls({
+        isZoom: true,
+        isPan: true,
+        isRotate: false,
+        minDistance: 900,
+        maxDistance: 3000,
+        maxPolarAngle: Math.PI / 1.4,
+        target: targetCam,
+      });
+      selectMap("floor-1");
+    }
 
     /*const groupTree = new THREE.Group();
     groupTree.name = "building";
@@ -138,7 +169,7 @@ export function testmylib(): boolean {
       map1.disposeTHREE();
       const paramCam: OptionsCam = {};
       const targetCam = new THREE.Vector3(0, 0, 0);
-      map1.start();
+      //map1.start();
       map1.init();
       //paramCam.fov = 55;
       paramCam.aspect = nodeMap!.offsetWidth / nodeMap!.offsetHeight;
@@ -171,6 +202,15 @@ export function testmylib(): boolean {
 
       map1.selectItem(dataelement);
     }
+    function selectObject(idObject: string[]): void {
+      console.log("selectObject element = ", idObject);
+      //const geturl = dataelement.getAttribute('data-url')
+      map1.selectObject(
+        idObject,
+        map1.options?.signsLayer?.substring(1) as string,
+        false
+      );
+    }
     async function selectMap(
       floorMap: any,
       selectItem: string[] = []
@@ -194,8 +234,219 @@ export function testmylib(): boolean {
             rotations: new THREE.Vector3(0, 0, 0),
             scales: new THREE.Vector3(0.5, 0.5, 1.0),
           };
+          const startS = await map1.runLoadSVG();
           addWall(map1, "floor-1");
           addFloor(map1, "floor-1");
+          map1.addSign({
+            nameSign: "sign-1",
+            urlSignImage: "./public/i-atm.png",
+            position: new THREE.Vector3(420, 1200, 260),
+            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x312100,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.5,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          });
+          map1.addSign({
+            nameSign: "sign-2",
+            urlSignImage: "./public/i-atm.png",
+            width: 90,
+            height: 100,
+            depth: 100,
+            position: new THREE.Vector3(650, 1200, 260),
+            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x770000,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.5,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          });
+          map1.addSign({
+            nameSign: "sign-3",
+            urlSignImage: "./public/i-atm.png",
+            width: 20,
+            height: 100,
+            depth: 100,
+            position: new THREE.Vector3(850, 200, 360),
+            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x220099,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.5,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          });
+          /* const boxSign = map1.addBox({
+            nameBox: "sign-1",
+            width: 1,
+            height: 100,
+            depth: 100,
+            position: new THREE.Vector3(420, 1200, 260),
+            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+            materialsSide: {
+              front: "./public/i-atm.png",
+              back: "",
+              left: "",
+              right: "",
+              up: "",
+              down: "",
+            },
+            material: new THREE.MeshPhongMaterial({
+              color: 0x998888,
+              specular: 0x666666,
+              emissive: 0x777777,
+              shininess: 6,
+              opacity: 0.8,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          });
+          const boxSignq = map1.addBox({
+            nameBox: "sign-2",
+            width: 90,
+            height: 100,
+            depth: 100,
+            position: new THREE.Vector3(650, 1200, 260),
+            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+            materialsSide: {
+              front: "./public/i-atm.png",
+              back: "",
+              left: "",
+              right: "",
+              up: "",
+              down: "",
+            },
+            material: new THREE.MeshPhongMaterial({
+              color: 0x770000,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.5,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          }); */
+          const boxBox = map1.addBox({
+            namegroup: map1.options?.objectsLayer?.substring(1),
+            nameBox: "box-red",
+            width: 90,
+            height: 100,
+            depth: 100,
+            position: new THREE.Vector3(650, 600, 260),
+            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x990000,
+              specular: 0x990000,
+              emissive: 0x220000,
+              shininess: 6,
+              opacity: 0.99,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          });
+          const objLine = new THREE.Group();
+          objLine.name = "line-4511";
+          /*       map.addPolyline({
+            points: path, // points
+            isDash: false, 
+            color: 0x000000, // color
+            shadow: {
+              castShadow: true,
+              receiveShadow: false,
+            },
+          }); */
+          map1.addTubePath({
+            nameGroupInsert: "signsLayer",
+            nameLine: "line rt-0",
+            points: [
+              new THREE.Vector3(1040, 980, 50),
+              new THREE.Vector3(1040, 920, 50),
+              new THREE.Vector3(1300, 920, 100),
+              new THREE.Vector3(1300, 280, 100),
+            ], // points
+            material: new THREE.MeshPhongMaterial({
+              color: 0x990000,
+              specular: 0x000000,
+              emissive: 0x990000,
+              shininess: 2,
+              opacity: 0.9,
+              transparent: true,
+              wireframe: false,
+            }),
+            radius: 2,
+            curveType: "catmullrom", //Possible values are centripetal, chordal and catmullrom.
+            curveTension: 0.0, //Used only for catmullrom curveType.
+            shadow: {
+              castShadow: true,
+              receiveShadow: false,
+            },
+          });
+          map1.addTubePath({
+            nameGroupInsert: "signsLayer3",
+            nameLine: "line rt-1",
+            points: [
+              new THREE.Vector3(2040, 980, 120),
+              new THREE.Vector3(2040, 920, 120),
+              new THREE.Vector3(2300, 920, 120),
+              new THREE.Vector3(2300, 980, 120),
+            ], // points
+            material: new THREE.MeshPhongMaterial({
+              color: 0x990000,
+              specular: 0x000000,
+              emissive: 0x990000,
+              shininess: 2,
+              opacity: 0.9,
+              transparent: true,
+              wireframe: false,
+            }),
+            radius: 2,
+            curveType: "catmullrom", //Possible values are centripetal, chordal and catmullrom.
+            curveTension: 0.0, //Used only for catmullrom curveType.
+            shadow: {
+              castShadow: true,
+              receiveShadow: false,
+            },
+          });
+
           map1.addObject({
             nameObject: "cafe-01",
             urlOBJ: "./public/3dobj/obj/cafe-1.obj",
@@ -214,6 +465,7 @@ export function testmylib(): boolean {
             rotations: new THREE.Vector3(0, 0, 0),
             scales: new THREE.Vector3(0.5, 0.5, 1.0),
           };
+          await map1.runLoadSVG();
           addWall(map1, "floor-2");
           addFloor(map1, "floor-2");
 
@@ -283,6 +535,7 @@ export function testmylib(): boolean {
             rotations: new THREE.Vector3(0, 0, 0),
             scales: new THREE.Vector3(0.5, 0.5, 1.0),
           };
+          await map1.runLoadSVG();
           addWall(map1, "floor-3");
           addFloor(map1, "floor-3");
           addRoof(map1, "floor-3");
@@ -295,6 +548,7 @@ export function testmylib(): boolean {
             rotations: new THREE.Vector3(0, 0, 0),
             scales: new THREE.Vector3(0.5, 0.5, 1.0),
           };
+          await map1.runLoadSVG();
           addWall(map1, "floor-4");
           addFloor(map1, "floor-4");
           addRoof(map1, "floor-4");
@@ -307,6 +561,7 @@ export function testmylib(): boolean {
             rotations: new THREE.Vector3(0, 0, 0),
             scales: new THREE.Vector3(0.5, 0.5, 1.0),
           };
+          await map1.runLoadSVG();
           addWall(map1, "floor-5");
           addFloor(map1, "floor-5");
           addRoof(map1, "floor-5");
@@ -319,6 +574,7 @@ export function testmylib(): boolean {
             rotations: new THREE.Vector3(0, 0, 0),
             scales: new THREE.Vector3(0.5, 0.5, 1.0),
           };
+          await map1.runLoadSVG();
           addWall(map1, "floor-0");
           addFloor(map1, "floor-0");
           break;
@@ -655,6 +911,9 @@ export function testmylib(): boolean {
       "entrance-7"
     );
     console.log("Add Text Object", map.scenePublic);
+  }
+  function clearSelectObject(map: ClientSVG3D): void {
+    map.clearSelectObject(map.options?.signsLayer?.substring(1) as string);
   }
   function gotoURLClick(dataelement: any): void {
     console.log("gotoURLClick element = ", dataelement);

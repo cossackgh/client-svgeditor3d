@@ -20,6 +20,7 @@ import type {
   SphereParams,
   PolylineOptions,
   TubeOptions,
+  SignOptions,
 } from "./models/simple.models";
 //import { SvgMap } from './_privatemodule/svg'
 import Base from "./base";
@@ -33,7 +34,9 @@ import { TextGeometry } from "./TextGeometry.js";
 import { FontLoader } from "./FontLoader.js";
 import { TTFLoader } from "./TTFLoader.js";
 import { createMultiMaterialObject } from "./SceneUtils.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+//import { OrbitControls } from "./vendor_mods/three/examples/jsm/controls/OrbitControls";
+//import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "./OrbitControls.js";
 //import { OutlineEffect } from "three/addons/effects/OutlineEffect.js";
 import { EffectComposer } from "./EffectComposer.js";
 import { RenderPass } from "./RenderPass.js";
@@ -42,6 +45,7 @@ import { OutlinePass } from "./OutlinePass.js";
 import { FXAAShader } from "./FXAAShader.js";
 
 import { OutlineEffect } from "./OutlineEffect.js";
+import { MeshPhongMaterial, ShapePath } from "three";
 
 export class ClientSVG3D extends Base {
   node: HTMLElement;
@@ -52,6 +56,8 @@ export class ClientSVG3D extends Base {
     urlmap: "",
     stringSVG: "",
     interactiveLayer: "#interactive",
+    objectsLayer: "#objectsL",
+    signsLayer: "#signsL",
     isRemoveUnuseItem: false,
     isHoverEnable: true,
     funcParams: {},
@@ -99,11 +105,13 @@ export class ClientSVG3D extends Base {
     y: 0,
   };
   static nodeMap: HTMLElement;
+  static parseSVGMap: ShapePath[];
   static mixer: THREE.AnimationMixer | null;
   static clock: THREE.Clock | null = new THREE.Clock();
   static loadObject: THREE.Object3D | null = new THREE.Object3D();
   static rootMap: THREE.Group | null = new THREE.Group();
   static groupObjects: THREE.Group | null = new THREE.Group();
+  static groupSigns: THREE.Group | null = new THREE.Group();
   static groupActive: THREE.Group | null = new THREE.Group();
   static groupSVGExtrude: THREE.Group | null = new THREE.Group();
   static groupTexts: THREE.Group | null = new THREE.Group();
@@ -150,6 +158,12 @@ export class ClientSVG3D extends Base {
       if (options.interactiveLayer !== undefined) {
         this.options.interactiveLayer = options.interactiveLayer;
       }
+      if (options.objectsLayer !== undefined) {
+        this.options.objectsLayer = options.objectsLayer;
+      }
+      if (options.signsLayer !== undefined) {
+        this.options.signsLayer = options.signsLayer;
+      }
       if (options.isRemoveUnuseItem !== undefined) {
         this.options.isRemoveUnuseItem = options.isRemoveUnuseItem;
       }
@@ -172,45 +186,117 @@ export class ClientSVG3D extends Base {
   initTREE() {
 
   } */
+
+  runLoadSVG(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      if (ClientSVG3D.DEBUG) console.log("runLoadSVG");
+      const classOptions = this.options;
+      const manager = new THREE.LoadingManager();
+      const loaderSVG = new SVGLoader(manager);
+
+      loaderSVG.load(
+        classOptions.urlmap,
+        async (data: { paths: ShapePath[] }) => {
+          ClientSVG3D.parseSVGMap = data.paths;
+          if (ClientSVG3D.DEBUG)
+            console.log("    ## LOAD All paths => ", ClientSVG3D.parseSVGMap);
+
+          //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);
+          if (ClientSVG3D.DEBUG)
+            console.log("start  this.options", this.options);
+          if (this.options.isHoverEnable) {
+            this.node.addEventListener(
+              "mousemove",
+              ClientSVG3D.onDocumentMouseMove,
+              false
+            );
+          }
+          resolve(true);
+        },
+        (xhr: any) => {
+          if (ClientSVG3D.DEBUG)
+            console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+          //resolve(true);
+        },
+        (error: any) => {
+          if (ClientSVG3D.DEBUG) console.log("An error happened", error);
+          resolve(false);
+        }
+      );
+    });
+  }
+
   changeSceneBG(color: string): void {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     ClientSVG3D.scene!.background = new THREE.Color(color);
   }
 
-  init(): void {
-    ClientSVG3D.rootMap!.name = "rootMap";
-    ClientSVG3D.rootMap!.position.x = -1400;
-    ClientSVG3D.rootMap!.position.y = -650;
-    ClientSVG3D.rootMap!.position.z = 1;
-    ClientSVG3D.rootMap!.scale.set(1.0, 1.0, 1.0);
-    ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
+  async init(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      ClientSVG3D.scene = new THREE.Scene();
+      this.scenePublic = ClientSVG3D.scene;
+      ClientSVG3D.camera = new THREE.PerspectiveCamera();
+      ClientSVG3D.rootMap!.name = "rootMap";
+      ClientSVG3D.rootMap!.position.x = -1400;
+      ClientSVG3D.rootMap!.position.y = -650;
+      ClientSVG3D.rootMap!.position.z = 1;
+      ClientSVG3D.rootMap!.scale.set(1.0, 1.0, 1.0);
+      ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
 
-    ClientSVG3D.nodeMap = this.node;
-    const container = this.node;
-    if (ClientSVG3D.groupObjects!.name === "") {
-      ClientSVG3D.groupObjects!.name = "objects";
-    }
-    if (ClientSVG3D.groupTexts!.name === "") {
-      ClientSVG3D.groupTexts!.name = "text";
-    }
+      ClientSVG3D.nodeMap = this.node;
+      if (ClientSVG3D.DEBUG)
+        console.log("start  ClientSVG3D", ClientSVG3D.nodeMap);
+      const container = this.node;
+      if (ClientSVG3D.groupObjects!.name === "") {
+        ClientSVG3D.groupObjects!.name =
+          this.options.objectsLayer!.substring(1);
+        ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
+        ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
+        ClientSVG3D.render();
+      } else {
+        ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
+        ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
+        ClientSVG3D.render();
+      }
+      if (ClientSVG3D.groupSigns!.name === "") {
+        ClientSVG3D.groupSigns!.name = this.options.signsLayer!.substring(1);
+        ClientSVG3D.rootMap?.add(ClientSVG3D.groupSigns!);
+        ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
+        ClientSVG3D.render();
+      } else {
+        ClientSVG3D.rootMap?.add(ClientSVG3D.groupSigns!);
+        ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
+        ClientSVG3D.render();
+      }
 
-    //this.changeSceneBG(this.options?.mapTheme?.colorBG?.toString() || "#000");
-    ClientSVG3D.renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true,
-    });
-    ClientSVG3D.renderer.setSize(container.clientWidth, container.clientHeight);
-    //ClientSVG3D.renderer.shadowMap.type = THREE.BasicShadowMap;
-    ClientSVG3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    ClientSVG3D.renderer.shadowMap.enabled = true;
-    container.appendChild(ClientSVG3D.renderer.domElement);
-    console.log("ClientSVG3D.camera! #### ", ClientSVG3D.camera!);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    ClientSVG3D.renderer.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
-    if (ClientSVG3D.DEBUG) console.log("container", container);
-    if (ClientSVG3D.DEBUG)
-      console.log("ClientSVG3D.renderer.", ClientSVG3D.renderer.domElement);
-    /*let paramCam: OptionsCam | undefined;
+      if (ClientSVG3D.groupTexts!.name === "") {
+        ClientSVG3D.groupTexts!.name = "text";
+      }
+      //ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
+
+      //this.changeSceneBG(this.options?.mapTheme?.colorBG?.toString() || "#000");
+      ClientSVG3D.renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+      });
+      ClientSVG3D.renderer.setSize(
+        container.clientWidth,
+        container.clientHeight
+      );
+      //ClientSVG3D.renderer.shadowMap.type = THREE.BasicShadowMap;
+      ClientSVG3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      ClientSVG3D.renderer.shadowMap.enabled = true;
+      container.appendChild(ClientSVG3D.renderer.domElement);
+      if (ClientSVG3D.DEBUG)
+        console.log("ClientSVG3D.camera! #### ", ClientSVG3D.camera!);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      ClientSVG3D.renderer.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
+      if (ClientSVG3D.DEBUG) console.log("container", container);
+      if (ClientSVG3D.DEBUG)
+        console.log("ClientSVG3D.renderer.", ClientSVG3D.renderer.domElement);
+
+      window.addEventListener("resize", this.onWindowResize);
+      resolve(true);
+      /*let paramCam: OptionsCam | undefined;
     let paramAmbientLight: OptionsAmbientLight | undefined;
     let paramSpotLight: OptionsSpotLight | undefined;
     let paramPlane: OptionsPlane | undefined;
@@ -219,7 +305,7 @@ export class ClientSVG3D extends Base {
     this.addSpotLight(paramSpotLight);
     this.addPlane(paramPlane); */
 
-    /*this.addSVGExtrudeObject({
+      /*this.addSVGExtrudeObject({
       groupObjects: new THREE.Group(),
       settingsGroup: {
         nameGroup: "active",
@@ -246,10 +332,10 @@ export class ClientSVG3D extends Base {
       },
     }); */
 
-    //this.addControls(true, true, false);
+      //this.addControls(true, true, false);
 
-    //Postprocessing
-    /*     const composer = new EffectComposer(ClientSVG3D.renderer);
+      //Postprocessing
+      /*     const composer = new EffectComposer(ClientSVG3D.renderer);
 
     const renderPass = new RenderPass(ClientSVG3D.scene, ClientSVG3D.camera);
     composer.addPass(renderPass);
@@ -272,15 +358,18 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.outlinePass.pulsePeriod = 6;
     ClientSVG3D.outlinePass.visibleEdgeColor.set("#006834");
     ClientSVG3D.outlinePass.hiddenEdgeColor.set("#190a05"); */
-    /* ClientSVG3D.effect = new OutlineEffect(ClientSVG3D.renderer);
+      /* ClientSVG3D.effect = new OutlineEffect(ClientSVG3D.renderer);
     new OutlineEffect(ClientSVG3D.renderer, {
       defaultThickness: 0.01,
       defaultColor: [34, 0, 0],
       defaultAlpha: 0.8,
       defaultKeepAlive: true, // keeps outline material in cache even if material is removed from scene
     }); */
+    });
   }
   addCamera(optionsCam: OptionsCam | undefined): void {
+    console.log("addCamera", optionsCam);
+    console.log("addCamera ClientSVG3D.camera", ClientSVG3D.camera);
     ClientSVG3D.camera!.fov = optionsCam?.fov ?? 55;
     ClientSVG3D.camera!.aspect =
       optionsCam?.aspect ?? window.innerWidth / window.innerHeight;
@@ -443,8 +532,119 @@ export class ClientSVG3D extends Base {
       boxparams.width ?? 100,
       boxparams.depth ?? 100
     );
-    const materialBox = boxparams.material ?? new THREE.MeshPhongMaterial();
-    const cube = new THREE.Mesh(geometry, materialBox);
+    const materialBoxFront =
+      boxparams.material?.clone() ?? new THREE.MeshPhongMaterial();
+    const materialBoxBack =
+      boxparams.material?.clone() ?? new THREE.MeshPhongMaterial();
+    const materialBoxLeft =
+      boxparams.material?.clone() ?? new THREE.MeshPhongMaterial();
+    const materialBoxRight =
+      boxparams.material?.clone() ?? new THREE.MeshPhongMaterial();
+    const materialBoxUp =
+      boxparams.material?.clone() ?? new THREE.MeshPhongMaterial();
+    const materialBoxDown =
+      boxparams.material?.clone() ?? new THREE.MeshPhongMaterial();
+
+    const textureLoader = new THREE.TextureLoader();
+    const textureFront = textureLoader.load(
+      boxparams.materialsSide?.front as string,
+      (texture) => {
+        materialBoxFront.map = texture;
+        materialBoxFront.needsUpdate = true;
+      },
+      undefined,
+      (err) => {
+        console.error(
+          " ### ==== #### addBox textureFront  err = > ",
+          boxparams.materialsSide?.front
+        );
+        console.error(" ### ==== #### addBox textureFront  err = > ", err);
+      }
+    );
+    const textureBack = textureLoader.load(
+      boxparams.materialsSide?.back as string
+    );
+    const textureLeft = textureLoader.load(
+      boxparams.materialsSide?.left as string
+    );
+    const textureRight = textureLoader.load(
+      boxparams.materialsSide?.right as string
+    );
+    const textureUp = textureLoader.load(boxparams.materialsSide?.up as string);
+    const textureDown = textureLoader.load(
+      boxparams.materialsSide?.down as string
+    );
+
+    if (ClientSVG3D.DEBUG)
+      console.log(
+        " ### ==== #### addBox boxparams.materialsSide?.up  = > ",
+        boxparams.materialsSide?.front
+      );
+    if (ClientSVG3D.DEBUG)
+      console.log(" ### ==== #### addBox textureFront  = > ", textureFront);
+    const materialUp =
+      boxparams.materialsSide?.up !== undefined &&
+      boxparams.materialsSide?.up !== ""
+        ? (materialBoxUp.map = textureUp)
+        : boxparams.material;
+    const materialDown =
+      boxparams.materialsSide?.down !== undefined &&
+      boxparams.materialsSide?.down !== ""
+        ? (materialBoxDown.map = textureDown)
+        : boxparams.material;
+    const materialRight =
+      boxparams.materialsSide?.right !== undefined &&
+      boxparams.materialsSide?.right !== ""
+        ? (materialBoxRight.map = textureRight)
+        : boxparams.material;
+    const materialLeft =
+      boxparams.materialsSide?.left !== undefined &&
+      boxparams.materialsSide?.left !== ""
+        ? (materialBoxLeft.map = textureLeft)
+        : boxparams.material;
+    const materialFront =
+      boxparams.materialsSide?.front !== undefined &&
+      boxparams.materialsSide?.front !== ""
+        ? materialWithTexture(
+            materialBoxFront as MeshPhongMaterial,
+            textureFront
+          )
+        : boxparams.material;
+    const materialBack =
+      boxparams.materialsSide?.back !== undefined &&
+      boxparams.materialsSide?.back !== ""
+        ? (materialBoxBack.map = textureBack)
+        : boxparams.material;
+    if (ClientSVG3D.DEBUG)
+      console.log(" ### ==== #### addBox materialBox = > ", materialFront);
+    if (ClientSVG3D.DEBUG)
+      console.log(
+        " ### ==== #### addBox boxparams.material = > ",
+        boxparams.material
+      );
+    // create material array for each side of the box
+    const materials: any = [
+      materialRight,
+      materialLeft,
+      materialFront,
+      materialBack,
+      materialUp,
+      materialDown,
+    ];
+    if (ClientSVG3D.DEBUG)
+      console.log(
+        " ### ==== #### addBox boxparams.material  = > ",
+        boxparams.material
+      );
+    const faceMaterial =
+      boxparams.materialsSide !== undefined
+        ? materials
+        : boxparams.material !== undefined
+        ? boxparams.material
+        : new THREE.MeshPhongMaterial();
+    if (ClientSVG3D.DEBUG)
+      console.log(" ### ==== #### addBox faceMaterial = > ", faceMaterial);
+    const cube = new THREE.Mesh(geometry, faceMaterial);
     cube.position.set(
       boxparams.position!.x ?? 0,
       boxparams.position!.y ?? 0,
@@ -457,7 +657,31 @@ export class ClientSVG3D extends Base {
     );
     cube.castShadow = boxparams.shadow?.castShadow ?? true;
     cube.receiveShadow = boxparams.shadow?.receiveShadow ?? true;
-    ClientSVG3D.rootMap?.add(cube);
+    cube.name = boxparams.nameBox ?? "box - " + Math.random() * 1000;
+    if (ClientSVG3D.DEBUG)
+      console.log(
+        " ### ==== #### addBox boxparams.namegroup = > ",
+        boxparams.namegroup
+      );
+    let groupBox: any = ClientSVG3D.scene?.getObjectByName(
+      boxparams.namegroup!
+    );
+    if (groupBox === undefined) {
+      groupBox = ClientSVG3D.groupObjects;
+      //groupBox.name = boxparams.namegroup!;
+    }
+    if (ClientSVG3D.DEBUG)
+      console.log(" ### ==== #### addBox groupBox = > ", groupBox);
+    groupBox?.add(cube);
+    ClientSVG3D.rootMap?.add(groupBox!);
+    if (ClientSVG3D.DEBUG) console.log(" ### ==== #### addBox cube = > ", cube);
+    function materialWithTexture(
+      material: THREE.MeshPhongMaterial,
+      texture: THREE.Texture
+    ): THREE.MeshPhongMaterial {
+      material.map = texture;
+      return material;
+    }
     ClientSVG3D.render();
     return cube;
   }
@@ -581,7 +805,6 @@ export class ClientSVG3D extends Base {
         ClientSVG3D.groupObjects?.add(model);
 
         ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
-        //ClientSVG3D.scene.add(ClientSVG3D.groupObjects);
         ClientSVG3D.render();
       },
       undefined,
@@ -613,8 +836,19 @@ export class ClientSVG3D extends Base {
     const tube = new THREE.Mesh(geometry, material);
     tube.castShadow = options.shadow?.castShadow ?? false;
     tube.receiveShadow = options.shadow?.receiveShadow ?? false;
-    ClientSVG3D.groupObjects?.add(tube);
-    ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
+    tube.name = options.nameLine ?? "line - " + Math.random() * 1000;
+    const groupTube = ClientSVG3D.scene?.getObjectByName(
+      options.nameGroupInsert ?? ""
+    );
+    if (ClientSVG3D.DEBUG)
+      console.log("    ## addTubePath GROUP => ", groupTube);
+    if (groupTube?.type !== "Scene" && groupTube !== undefined) {
+      groupTube?.add(tube);
+      ClientSVG3D.rootMap?.add(groupTube!);
+    } else {
+      ClientSVG3D.groupObjects?.add(tube);
+      ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
+    }
     ClientSVG3D.render();
   }
   addPolyline(options: PolylineOptions): void {
@@ -624,11 +858,18 @@ export class ClientSVG3D extends Base {
       points.push(new THREE.Vector3(element.x, element.y, element.z));
     }
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({ color: options.color });
+    const material = options.isDash
+      ? new THREE.LineDashedMaterial({
+          color: options.color,
+          dashSize: 1,
+          gapSize: 0.4,
+        })
+      : new THREE.LineBasicMaterial({ color: options.color });
     const line = new THREE.Line(geometry, material);
 
     line.castShadow = options.shadow?.castShadow ?? false;
     line.receiveShadow = options.shadow?.receiveShadow ?? false;
+    line.name = options.nameLine ?? "line - " + Math.random() * 1000;
     ClientSVG3D.groupObjects?.add(line);
     ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
     ClientSVG3D.render();
@@ -667,7 +908,7 @@ export class ClientSVG3D extends Base {
       if (ClientSVG3D.DEBUG)
         console.log(" ### ==== #### addText centerOffset = > ", centerOffset);
       const textMesh1 = new THREE.Mesh(textGeo, materialText);
-
+      textMesh1.name = optionsText.text ?? "text - " + Math.random() * 1000;
       textMesh1.position.x = centerOffset + (optionsText.position?.x as number);
       textMesh1.position.y = optionsText.position?.y as number;
       textMesh1.position.z = optionsText.position?.z as number;
@@ -682,7 +923,6 @@ export class ClientSVG3D extends Base {
 
       ClientSVG3D.groupTexts?.add(textMesh1);
       ClientSVG3D.rootMap?.add(ClientSVG3D.groupTexts!);
-      //ClientSVG3D.scene.add(ClientSVG3D.groupTexts);
       ClientSVG3D.render();
       if (ClientSVG3D.DEBUG)
         console.log(
@@ -695,83 +935,313 @@ export class ClientSVG3D extends Base {
     const classOptions = this.options;
     const manager = new THREE.LoadingManager();
     const loaderSVG = new SVGLoader(manager);
-
-    loaderSVG.load(
-      classOptions.urlmap,
-      (data: { paths: any }) => {
-        const paths = data.paths;
-        if (ClientSVG3D.DEBUG)
-          console.log("    ## addTextToSVGPoint paths => ", data);
-        for (let i = 0; i < paths.length; i++) {
-          const path = paths[i];
-          const simpleShapes = SVGLoader.createShapes(path);
-          for (let j = 0; j < simpleShapes.length; j++) {
-            const simpleShape = simpleShapes[j];
-            const shape3d = new THREE.ExtrudeGeometry(simpleShape, {
-              depth: 50,
-              bevelEnabled: false,
-            });
-            if (path.userData.node.nodeName === "circle") {
-              /*console.log(
-                "    ## addTextToSVGPoint path.userData.node.parentNode.id => ",
-                path.userData.node.attributes.cx.value
+    if (ClientSVG3D.parseSVGMap.length === 0) {
+      loaderSVG.load(
+        classOptions.urlmap,
+        (data: { paths: any }) => {
+          const paths = data.paths;
+          if (ClientSVG3D.DEBUG)
+            console.log("    ## addTextToSVGPoint paths => ", data);
+          for (let i = 0; i < paths.length; i++) {
+            const path = paths[i];
+            const simpleShapes = SVGLoader.createShapes(path);
+            for (let j = 0; j < simpleShapes.length; j++) {
+              const simpleShape = simpleShapes[j];
+              const shape3d = new THREE.ExtrudeGeometry(simpleShape, {
+                depth: 50,
+                bevelEnabled: false,
+              });
+              if (path.userData.node.nodeName === "circle") {
+                if (path.userData.node.id === idPoint) {
+                  const mesh = new THREE.Mesh(
+                    shape3d,
+                    new THREE.MeshPhongMaterial({
+                      color: 0x111111,
+                      specular: 0x666666,
+                      emissive: 0x777777,
+                      shininess: 6,
+                      opacity: 0.9,
+                      transparent: false,
+                      wireframe: false,
+                    })
+                  );
+                  this.addText({
+                    nameTextObject: optionsText.nameTextObject,
+                    text: optionsText.text,
+                    color: optionsText.color,
+                    size: optionsText.size,
+                    position: new THREE.Vector3(
+                      Number(path.userData.node.attributes.cx.value),
+                      Number(path.userData.node.attributes.cy.value),
+                      optionsText.position?.z
+                    ),
+                    rotation: optionsText.rotation,
+                    scale: optionsText.scale,
+                    font: optionsText.font,
+                    isAnimation: optionsText.isAnimation,
+                    isLoopAnimation: optionsText.isLoopAnimation,
+                    pathAnimation: optionsText.pathAnimation,
+                    shadow: optionsText.shadow,
+                  });
+                }
+              }
+            }
+          }
+          ClientSVG3D.rootMap?.add(ClientSVG3D.groupActive!);
+          ClientSVG3D.render();
+        },
+        function (xhr: { loaded: number; total: number }) {
+          if (ClientSVG3D.DEBUG)
+            console.log(
+              (xhr.loaded / xhr.total) * 100 + "% loaded SHOPS for text"
+            );
+        },
+        function (error: any) {
+          if (ClientSVG3D.DEBUG) console.log("An error happened", error);
+        }
+      );
+    } else {
+      for (let i = 0; i < ClientSVG3D.parseSVGMap.length; i++) {
+        const path = ClientSVG3D.parseSVGMap[i] as any;
+        const simpleShapes = SVGLoader.createShapes(path);
+        for (let j = 0; j < simpleShapes.length; j++) {
+          const simpleShape = simpleShapes[j];
+          const shape3d = new THREE.ExtrudeGeometry(simpleShape, {
+            depth: 50,
+            bevelEnabled: false,
+          });
+          if (path.userData.node.nodeName === "circle") {
+            if (path.userData.node.id === idPoint) {
+              const mesh = new THREE.Mesh(
+                shape3d,
+                new THREE.MeshPhongMaterial({
+                  color: 0x111111,
+                  specular: 0x666666,
+                  emissive: 0x777777,
+                  shininess: 6,
+                  opacity: 0.9,
+                  transparent: false,
+                  wireframe: false,
+                })
               );
-              console.log("    ## addTextToSVGPoint idPoint => ", idPoint); */
-              if (path.userData.node.id === idPoint) {
-                /* console.log("    ## simpleShapes => ", simpleShapes);
-                console.log("    ## shape3d => ", shape3d); */
-                const mesh = new THREE.Mesh(
-                  shape3d,
+              this.addText({
+                text: optionsText.text,
+                color: optionsText.color,
+                size: optionsText.size,
+                position: new THREE.Vector3(
+                  Number(path.userData.node.attributes.cx.value),
+                  Number(path.userData.node.attributes.cy.value),
+                  optionsText.position?.z
+                ),
+                rotation: optionsText.rotation,
+                scale: optionsText.scale,
+                font: optionsText.font,
+                isAnimation: optionsText.isAnimation,
+                isLoopAnimation: optionsText.isLoopAnimation,
+                pathAnimation: optionsText.pathAnimation,
+                shadow: optionsText.shadow,
+              });
+            }
+          }
+        }
+      }
+      ClientSVG3D.rootMap?.add(ClientSVG3D.groupActive!);
+      ClientSVG3D.render();
+    }
+  }
+  addSign(optionsSign: SignOptions): void {
+    const classOptions = this.options;
+
+    console.log("urlSignImage = ", optionsSign.nameSign);
+    console.log("ClientSVG3D.groupSigns = ", ClientSVG3D.groupSigns?.name);
+
+    const boxSign = this.addBox({
+      namegroup: ClientSVG3D.groupSigns?.name,
+      nameBox: optionsSign.nameSign ?? "sign" + Math.random() * 1000,
+      width: optionsSign.width ?? 0,
+      height: optionsSign.height ?? 100,
+      depth: optionsSign.depth ?? 100,
+      position: optionsSign.position,
+      rotation: optionsSign.rotation,
+      materialsSide: {
+        front: optionsSign.urlSignImage ?? "",
+        back: "",
+        left: "",
+        right: "",
+        up: "",
+        down: "",
+      },
+      material:
+        optionsSign.material ??
+        new THREE.MeshPhongMaterial({
+          color: 0x999999,
+          //specular: 0x222222,
+          emissive: 0x999999,
+          shininess: 6,
+          opacity: 0.9,
+          transparent: false,
+          wireframe: false,
+        }),
+      shadow: {
+        castShadow: false,
+        receiveShadow: false,
+      },
+    });
+    ClientSVG3D.groupSigns?.add(boxSign);
+    ClientSVG3D.rootMap?.add(ClientSVG3D.groupSigns!);
+    ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
+    ClientSVG3D.render();
+    console.log("boxSign = ", boxSign);
+  }
+  addSignToSVGPoint(optionsSign: SignOptions, idPoint: string): void {
+    const classOptions = this.options;
+    const manager = new THREE.LoadingManager();
+    const loaderSVG = new SVGLoader(manager);
+    if (ClientSVG3D.parseSVGMap.length === 0) {
+      loaderSVG.load(
+        classOptions.urlmap,
+        (data: { paths: any }) => {
+          const paths = data.paths;
+          if (ClientSVG3D.DEBUG)
+            console.log("    ## addSignToSVGPoint paths => ", data);
+          for (let i = 0; i < paths.length; i++) {
+            const path = paths[i];
+            const simpleShapes = SVGLoader.createShapes(path);
+            for (let j = 0; j < simpleShapes.length; j++) {
+              if (path.userData.node.nodeName === "circle") {
+                if (path.userData.node.id === idPoint) {
+                  console.log("urlSignImage = ", optionsSign.urlSignImage);
+                  const boxSign = this.addBox({
+                    nameBox:
+                      optionsSign.nameSign ?? "sign" + Math.random() * 1000,
+                    width: 0,
+                    height: 100,
+                    depth: 100,
+                    position: new THREE.Vector3(
+                      Number(path.userData.node.attributes.cx.value),
+                      Number(path.userData.node.attributes.cy.value),
+                      optionsSign.position?.z
+                    ),
+                    rotation: optionsSign.rotation,
+                    materialsSide: {
+                      front: optionsSign.urlSignImage,
+                      back: "",
+                      left: "",
+                      right: "",
+                      up: "",
+                      down: "",
+                    },
+                    material:
+                      optionsSign.material ??
+                      new THREE.MeshPhongMaterial({
+                        color: 0x999999,
+                        //specular: 0x222222,
+                        emissive: 0x999999,
+                        shininess: 6,
+                        opacity: 0.9,
+                        transparent: false,
+                        wireframe: false,
+                      }),
+                    shadow: {
+                      castShadow: false,
+                      receiveShadow: false,
+                    },
+                  });
+                  console.log("boxSign = ", boxSign);
+                  ClientSVG3D.groupSigns?.add(boxSign);
+                }
+              }
+            }
+          }
+          ClientSVG3D.rootMap?.add(ClientSVG3D.groupSigns!);
+          ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
+          ClientSVG3D.rootMap?.add(ClientSVG3D.groupActive!);
+          ClientSVG3D.render();
+        },
+        function (xhr: { loaded: number; total: number }) {
+          if (ClientSVG3D.DEBUG)
+            console.log(
+              (xhr.loaded / xhr.total) * 100 + "% loaded SHOPS for text"
+            );
+        },
+        function (error: any) {
+          if (ClientSVG3D.DEBUG) console.log("An error happened", error);
+        }
+      );
+    } else {
+      for (let i = 0; i < ClientSVG3D.parseSVGMap.length; i++) {
+        const path = ClientSVG3D.parseSVGMap[i] as any;
+        const simpleShapes = SVGLoader.createShapes(path);
+        for (let j = 0; j < simpleShapes.length; j++) {
+          if (path.userData.node.nodeName === "circle") {
+            if (path.userData.node.id === idPoint) {
+              console.log("urlSignImage = ", optionsSign.urlSignImage);
+              const boxSign = this.addBox({
+                nameBox: optionsSign.nameSign ?? "sign" + Math.random() * 1000,
+                width: 0,
+                height: 100,
+                depth: 100,
+                position: new THREE.Vector3(
+                  Number(path.userData.node.attributes.cx.value),
+                  Number(path.userData.node.attributes.cy.value),
+                  optionsSign.position?.z
+                ),
+                rotation: optionsSign.rotation,
+                materialsSide: {
+                  front: optionsSign.urlSignImage,
+                  back: "",
+                  left: "",
+                  right: "",
+                  up: "",
+                  down: "",
+                },
+                material:
+                  optionsSign.material ??
                   new THREE.MeshPhongMaterial({
-                    color: 0x111111,
-                    specular: 0x666666,
-                    emissive: 0x777777,
+                    color: 0x999999,
+                    //specular: 0x222222,
+                    emissive: 0x999999,
                     shininess: 6,
                     opacity: 0.9,
                     transparent: false,
                     wireframe: false,
-                  })
-                );
-
-                //ClientSVG3D.groupActive.add(mesh);
-                //ClientSVG3D.rootMap.add(ClientSVG3D.groupActive);
-                this.addText({
-                  text: optionsText.text,
-                  color: optionsText.color,
-                  size: optionsText.size,
-                  position: new THREE.Vector3(
-                    Number(path.userData.node.attributes.cx.value),
-                    Number(path.userData.node.attributes.cy.value),
-                    optionsText.position?.z
-                  ),
-                  rotation: optionsText.rotation,
-                  scale: optionsText.scale,
-                  font: optionsText.font,
-                  isAnimation: optionsText.isAnimation,
-                  isLoopAnimation: optionsText.isLoopAnimation,
-                  pathAnimation: optionsText.pathAnimation,
-                  shadow: optionsText.shadow,
-                });
-              }
+                  }),
+                shadow: {
+                  castShadow: false,
+                  receiveShadow: false,
+                },
+              });
+              console.log("boxSign = ", boxSign);
+              ClientSVG3D.groupSigns?.add(boxSign);
             }
           }
         }
-        ClientSVG3D.rootMap?.add(ClientSVG3D.groupActive!);
-        //ClientSVG3D.scene.add(ClientSVG3D.rootMap);
-        ClientSVG3D.render();
-      },
-      function (xhr: { loaded: number; total: number }) {
-        if (ClientSVG3D.DEBUG)
-          console.log(
-            (xhr.loaded / xhr.total) * 100 + "% loaded SHOPS for text"
-          );
-      },
-      function (error: any) {
-        if (ClientSVG3D.DEBUG) console.log("An error happened", error);
       }
-    );
+      ClientSVG3D.rootMap?.add(ClientSVG3D.groupSigns!);
+      ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
+      ClientSVG3D.rootMap?.add(ClientSVG3D.groupActive!);
+      ClientSVG3D.render();
+    }
   }
+  addGroupToScene(group: THREE.Group): void {
+    console.log(
+      " ### ==== #### addGroupToScene rootMap = > ",
+      ClientSVG3D.scene
+    );
+    console.log(" ### ==== #### addGroupToScene group = > ", group);
+    const groupRoot = ClientSVG3D.scene?.getObjectByName("rootMap");
+    const geometry = new THREE.BoxGeometry(100, 100, 100);
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const cube = new THREE.Mesh(geometry, material);
+    cube.name = "cubeADD";
 
+    console.log(" ### ==== #### addGroupToScene groupRoot = > ", groupRoot);
+    ClientSVG3D.scene?.add(groupRoot!);
+    groupRoot?.add(cube);
+    //ClientSVG3D.scene?.add(cube);
+
+    ClientSVG3D.render();
+  }
   async addObject(options: LoadObject): Promise<any> {
     const classOptions = this.options;
     const manager = new THREE.LoadingManager();
@@ -1062,49 +1532,88 @@ export class ClientSVG3D extends Base {
       options.settingsGroup?.scales?.y as number,
       options.settingsGroup?.scales?.z as number
     ); */
-    loaderSVG.load(
-      classOptions.urlmap,
-      (data: { paths: any }) => {
-        const paths = data.paths;
-        if (ClientSVG3D.DEBUG)
-          console.log(" ### ==== #### addSVGExtrudeObject data = > ", data);
-        if (ClientSVG3D.DEBUG)
-          console.log(" ### ==== #### addSVGExtrudeObject paths = > ", paths);
-        for (let i = 0; i < paths.length; i++) {
-          const path = paths[i];
-          const simpleShapes = SVGLoader.createShapes(path);
-          for (let j = 0; j < simpleShapes.length; j++) {
-            if (path.userData.node.parentNode.id === options.nameLayerSVG) {
-              const simpleShape = simpleShapes[j];
-              const shape3d = new THREE.ExtrudeGeometry(
-                simpleShape,
-                options.settingsExtrude
-              );
-              const mesh = new THREE.Mesh(shape3d, options.material);
-              mesh.castShadow = options.shadow?.castShadow as boolean;
-              mesh.receiveShadow = options.shadow?.receiveShadow as boolean;
-              mesh.name = path.userData.node.id;
-              groupSVGExtrude.add(mesh);
+    if (ClientSVG3D.parseSVGMap.length === 0) {
+      loaderSVG.load(
+        classOptions.urlmap,
+        (data: { paths: any }) => {
+          const paths = data.paths;
+          if (ClientSVG3D.DEBUG)
+            console.log(" ### ==== #### addSVGExtrudeObject data = > ", data);
+          if (ClientSVG3D.DEBUG)
+            console.log(" ### ==== #### addSVGExtrudeObject paths = > ", paths);
+          for (let i = 0; i < paths.length; i++) {
+            const path = paths[i];
+            const simpleShapes = SVGLoader.createShapes(path);
+            for (let j = 0; j < simpleShapes.length; j++) {
+              if (path.userData.node.parentNode.id === options.nameLayerSVG) {
+                const simpleShape = simpleShapes[j];
+                const shape3d = new THREE.ExtrudeGeometry(
+                  simpleShape,
+                  options.settingsExtrude
+                );
+                const mesh = new THREE.Mesh(shape3d, options.material);
+                mesh.castShadow = options.shadow?.castShadow as boolean;
+                mesh.receiveShadow = options.shadow?.receiveShadow as boolean;
+                mesh.name = path.userData.node.id;
+                groupSVGExtrude.add(mesh);
+              }
             }
           }
+          ClientSVG3D.rootMap?.add(groupSVGExtrude);
+          ClientSVG3D.render();
+          if (selectItems.length > 0) {
+            selectItems.forEach((item: string) => {
+              this.selectItem(item, false);
+            });
+          }
+          return "OK";
+        },
+        function (xhr: { loaded: number; total: number }) {
+          if (ClientSVG3D.DEBUG)
+            console.log((xhr.loaded / xhr.total) * 100 + "% loaded SHOPS");
+        },
+        function (error: any) {
+          if (ClientSVG3D.DEBUG) console.log("An error happened", error);
         }
-        ClientSVG3D.rootMap?.add(groupSVGExtrude);
-        ClientSVG3D.render();
-        if (selectItems.length > 0) {
-          selectItems.forEach((item: string) => {
-            this.selectItem(item, false);
-          });
+      );
+    } else {
+      /* if (ClientSVG3D.DEBUG)
+        console.log(
+          " ### ==== #### addSVGExtrudeObject ClientSVG3D.parseSVGMap = > ",
+          ClientSVG3D.parseSVGMap
+        ); */
+      for (let i = 0; i < ClientSVG3D.parseSVGMap.length; i++) {
+        /* if (ClientSVG3D.DEBUG)
+          console.log(
+            " ### ==== #### addSVGExtrudeObject ClientSVG3D.parseSVGMap[i] = > ",
+            ClientSVG3D.parseSVGMap[i]
+          ); */
+        const path = ClientSVG3D.parseSVGMap[i] as any;
+        const simpleShapes = SVGLoader.createShapes(path);
+        for (let j = 0; j < simpleShapes.length; j++) {
+          if (path.userData.node.parentNode.id === options.nameLayerSVG) {
+            const simpleShape = simpleShapes[j];
+            const shape3d = new THREE.ExtrudeGeometry(
+              simpleShape,
+              options.settingsExtrude
+            );
+            const mesh = new THREE.Mesh(shape3d, options.material);
+            mesh.castShadow = options.shadow?.castShadow as boolean;
+            mesh.receiveShadow = options.shadow?.receiveShadow as boolean;
+            mesh.name = path.userData.node.id;
+            groupSVGExtrude.add(mesh);
+          }
         }
-        return "OK";
-      },
-      function (xhr: { loaded: number; total: number }) {
-        if (ClientSVG3D.DEBUG)
-          console.log((xhr.loaded / xhr.total) * 100 + "% loaded SHOPS");
-      },
-      function (error: any) {
-        if (ClientSVG3D.DEBUG) console.log("An error happened", error);
       }
-    );
+      ClientSVG3D.rootMap?.add(groupSVGExtrude);
+      ClientSVG3D.render();
+      if (selectItems.length > 0) {
+        selectItems.forEach((item: string) => {
+          this.selectItem(item, false);
+        });
+      }
+      return "KO";
+    }
     return "OK-2";
   }
 
@@ -1145,26 +1654,98 @@ export class ClientSVG3D extends Base {
       }
     }
   }
-
-  start(): void {
-    if (ClientSVG3D.DEBUG)
-      console.log("start  ClientSVG3D", ClientSVG3D.nodeMap);
-    //this.clearThree(ClientSVG3D.scene);
-    //this.init();
-    //this.animate();
-    ClientSVG3D.scene = new THREE.Scene();
-    this.scenePublic = ClientSVG3D.scene;
-    ClientSVG3D.camera = new THREE.PerspectiveCamera();
-    window.addEventListener("resize", this.onWindowResize);
-    //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);
-    if (ClientSVG3D.DEBUG) console.log("start  this.options", this.options);
-    if (this.options.isHoverEnable) {
-      this.node.addEventListener(
-        "mousemove",
-        ClientSVG3D.onDocumentMouseMove,
-        false
-      );
+  selectObject(
+    item: string | string[],
+    groupName: string,
+    isClear = true
+  ): void {
+    if (ClientSVG3D.DEBUG) console.log("selectObject item => ", item);
+    if (ClientSVG3D.DEBUG) console.log("selectObject groupName => ", groupName);
+    if (isClear) {
+      this.clearSelectObject(groupName);
     }
+
+    const group = ClientSVG3D.scene?.getObjectByName(groupName);
+
+    if (ClientSVG3D.DEBUG)
+      console.log("selectItem ClientSVG3D.scene => ", ClientSVG3D.scene);
+    if (ClientSVG3D.DEBUG) console.log("selectItem group => ", group);
+    if (item instanceof Array) {
+      group?.children.forEach((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.visible = false;
+          ClientSVG3D.render();
+        }
+      });
+      item.forEach((id) => {
+        if (ClientSVG3D.DEBUG) console.log("selectItem id => ", id);
+        group?.children.forEach((child) => {
+          if (child.name === id) {
+            if (ClientSVG3D.DEBUG) console.log("selectItem child => ", child);
+            if (child instanceof THREE.Mesh) {
+              child.visible = true;
+              ClientSVG3D.render();
+            }
+          }
+        });
+      });
+    } else {
+      const mesh = group?.getObjectByName(item);
+      if (ClientSVG3D.DEBUG) console.log("selectItem mesh => ", mesh);
+      group?.children.forEach((child) => {
+        if (child.name !== item && isClear) {
+          if (ClientSVG3D.DEBUG) console.log("selectItem child => ", child);
+          if (child instanceof THREE.Mesh) {
+            child.visible = false;
+            ClientSVG3D.render();
+          }
+        }
+      });
+      if (mesh) {
+        mesh.visible = true;
+        if (ClientSVG3D.DEBUG) console.log("mesh => ", mesh);
+        ClientSVG3D.render();
+      }
+    }
+  }
+
+  async start(): Promise<void> {
+    if (ClientSVG3D.DEBUG) console.log(" === > start()");
+    const classOptions = this.options;
+    const manager = new THREE.LoadingManager();
+    const loaderSVG = new SVGLoader(manager);
+
+    loaderSVG.load(
+      classOptions.urlmap,
+      (data: { paths: ShapePath[] }) => {
+        ClientSVG3D.parseSVGMap = data.paths;
+        if (ClientSVG3D.DEBUG)
+          console.log("    ## LOAD All paths => ", ClientSVG3D.parseSVGMap);
+        //this.clearThree(ClientSVG3D.scene);
+        //this.init();
+        //this.animate();
+
+        //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);
+        if (ClientSVG3D.DEBUG) console.log("start  this.options", this.options);
+        if (this.options.isHoverEnable) {
+          this.node.addEventListener(
+            "mousemove",
+            ClientSVG3D.onDocumentMouseMove,
+            false
+          );
+        }
+        return true;
+      },
+      (xhr: any) => {
+        if (ClientSVG3D.DEBUG)
+          console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+        return true;
+      },
+      (error: any) => {
+        if (ClientSVG3D.DEBUG) console.log("An error happened", error);
+        return false;
+      }
+    );
   }
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   static onDocumentMouseMove(event: {
@@ -1297,6 +1878,34 @@ export class ClientSVG3D extends Base {
     console.log("SCENE", ClientSVG3D.scene); */
     //throw new Error("Method not implemented.");
   }
+  clearSelectObject(nameGroupObject: string): void {
+    if (ClientSVG3D.DEBUG) console.log("clearSelectObject");
+    if (ClientSVG3D.DEBUG) console.log("nameGroupObject", nameGroupObject);
+    const groupObjects = ClientSVG3D.scene?.getObjectByName(nameGroupObject);
+    if (ClientSVG3D.DEBUG)
+      console.log("clearSelectObject groupObjects", groupObjects);
+    const materialClear = new THREE.MeshPhongMaterial({
+      color: 0x111111,
+      specular: 0x666666,
+      emissive: 0x777777,
+      shininess: 6,
+      opacity: 1.0,
+      transparent: true,
+      wireframe: false,
+    });
+    materialClear.userData.outlineParameters = {
+      thickness: 0.001,
+      color: [54, 0, 0],
+      alpha: 0.8,
+      visible: true,
+      keepAlive: false,
+    };
+    groupObjects?.children.forEach((element) => {
+      (element as THREE.Mesh).visible = true;
+      //element.scale.z = 1.0;
+    });
+    ClientSVG3D.render();
+  }
   clearColorActive(): void {
     if (ClientSVG3D.DEBUG) console.log("clearColorActive");
     const groupActive = ClientSVG3D.scene?.getObjectByName("active");
@@ -1372,10 +1981,13 @@ export class ClientSVG3D extends Base {
         if (
           obj.material[prop] !== null &&
           typeof obj.material[prop].dispose === "function"
-        )
+        ) {
           obj.material[prop].dispose();
+        }
       });
-      obj.material.dispose();
+      if (typeof obj.material.dispose === "function") {
+        obj.material.dispose();
+      }
     }
   }
   onWindowResize() {

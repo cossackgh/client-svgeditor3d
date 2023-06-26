@@ -38,6 +38,8 @@ export interface DataOptions {
   urlmap?: string;
   stringSVG?: string;
   interactiveLayer?: string;
+  objectsLayer?: string;
+  signsLayer?: string;
   isRemoveUnuseItem?: boolean;
   isHoverEnable?: boolean;
   funcClick?: () => void;
@@ -181,7 +183,9 @@ export interface ParametersStart {
   layaerActive?: string;
 }
 export interface TubeOptions {
+  nameLine?: string;
   points?: THREE.Vector3[];
+  nameGroupInsert?: string;
   color?: string | number;
   material?:
     | THREE.MeshBasicMaterial
@@ -199,13 +203,16 @@ export interface TubeOptions {
   };
 }
 export interface PolylineOptions {
+  nameLine?: string;
   points?: THREE.Vector3[];
+  nameGroupInsert?: string;
   color?: string | number;
   material?:
     | THREE.MeshBasicMaterial
     | THREE.MeshLambertMaterial
     | THREE.MeshPhongMaterial;
   thin?: number;
+  isDash?: boolean;
   isAnimation?: boolean;
   isLoopAnimation?: boolean;
   shadow?: {
@@ -214,6 +221,7 @@ export interface PolylineOptions {
   };
 }
 export interface TextOptions {
+  nameTextObject?: string;
   text?: string;
   color?: string | number;
   size?: number;
@@ -309,12 +317,15 @@ export interface CylinderParams {
   };
 }
 export interface BoxParams {
+  nameBox?: string;
+  namegroup?: string;
   width?: number;
   height?: number;
   depth?: number;
   widthSegments?: number;
   heightSegments?: number;
   depthSegments?: number;
+  materialsSide?: BoxSideTextures;
   material?:
     | THREE.MeshBasicMaterial
     | THREE.MeshLambertMaterial
@@ -326,6 +337,32 @@ export interface BoxParams {
     castShadow?: boolean;
     receiveShadow?: boolean;
   };
+}
+export interface SignOptions {
+  nameSign?: string;
+  width?: number;
+  height?: number;
+  depth?: number;
+  urlSignImage?: string;
+  material?:
+    | THREE.MeshBasicMaterial
+    | THREE.MeshLambertMaterial
+    | THREE.MeshPhongMaterial;
+  position?: THREE.Vector3;
+  rotation?: THREE.Vector3;
+  scale?: THREE.Vector3;
+  shadow?: {
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  };
+}
+export interface BoxSideTextures {
+  front?: string;
+  back?: string;
+  up?: string;
+  down?: string;
+  left?: string;
+  right?: string;
 }
 export interface OptionsSpotLight {
   name?: string;
