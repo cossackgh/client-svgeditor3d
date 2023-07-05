@@ -55,6 +55,8 @@ export class ClientSVG3D extends Base {
     title: "",
     urlmap: "",
     stringSVG: "",
+    activeColor: "#ff0000",
+    unactiveColor: "#111111",
     interactiveLayer: "#interactive",
     objectsLayer: "#objectsL",
     signsLayer: "#signsL",
@@ -104,6 +106,8 @@ export class ClientSVG3D extends Base {
     x: 0,
     y: 0,
   };
+  static activeColor: string | number | THREE.Color | undefined;
+  static unactiveColor: string | number | THREE.Color | undefined;
   static nodeMap: HTMLElement;
   static parseSVGMap: ShapePath[];
   static mixer: THREE.AnimationMixer | null;
@@ -154,6 +158,12 @@ export class ClientSVG3D extends Base {
       }
       if (options.paramsMap !== undefined) {
         this.options.paramsMap = options.paramsMap;
+      }
+      if (options.activeColor !== undefined) {
+        this.options.activeColor = options.activeColor;
+      }
+      if (options.unactiveColor !== undefined) {
+        this.options.unactiveColor = options.unactiveColor;
       }
       if (options.interactiveLayer !== undefined) {
         this.options.interactiveLayer = options.interactiveLayer;
@@ -232,6 +242,8 @@ export class ClientSVG3D extends Base {
 
   async init(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
+      ClientSVG3D.activeColor = this.options.activeColor;
+      ClientSVG3D.unactiveColor = this.options.unactiveColor;
       ClientSVG3D.scene = new THREE.Scene();
       this.scenePublic = ClientSVG3D.scene;
       ClientSVG3D.camera = new THREE.PerspectiveCamera();
@@ -1640,10 +1652,10 @@ export class ClientSVG3D extends Base {
       if (ClientSVG3D.DEBUG) console.log("selectItem mesh => ", mesh);
       if (mesh) {
         (mesh as THREE.Mesh).material = new THREE.MeshPhongMaterial({
-          color: 0xff1111,
-          specular: 0x666666,
+          color: ClientSVG3D.activeColor,
+          /*           specular: 0x666666,
           emissive: 0x003333,
-          shininess: 6,
+          shininess: 6, */
           opacity: 1.0,
           transparent: false,
           wireframe: false,
@@ -1808,14 +1820,17 @@ export class ClientSVG3D extends Base {
       /*intersects[0].object.position.z = -30; */
       (intersects[0].object as THREE.Mesh).material =
         new THREE.MeshPhongMaterial({
-          color: 0xff1111,
-          specular: 0x666666,
+          color: ClientSVG3D.activeColor,
+          /*           specular: 0x666666,
           emissive: 0x003333,
-          shininess: 6,
+          shininess: 6, */
           opacity: 1.0,
-          transparent: false,
+          transparent: true,
           wireframe: false,
+          side: THREE.DoubleSide,
         });
+      /*       intersects[0].object.castShadow = true;
+      intersects[0].object.receiveShadow = false; */
       if (ClientSVG3D.INTERSECTED != intersects[0].object) {
         if (ClientSVG3D.INTERSECTED) {
           //console.log("MOUSE OUT");
@@ -1829,17 +1844,21 @@ export class ClientSVG3D extends Base {
         const groupActive = ClientSVG3D.scene?.getObjectByName("active");
         groupActive?.children.forEach((element) => {
           (element as THREE.Mesh).material = new THREE.MeshPhongMaterial({
-            color: 0x111111,
-            specular: 0x666666,
+            color: ClientSVG3D.unactiveColor,
+            /*             specular: 0x666666,
             emissive: 0x777777,
-            shininess: 6,
+            shininess: 6, */
             opacity: 1.0,
-            transparent: false,
+            transparent: true,
             wireframe: false,
+            side: THREE.DoubleSide,
           });
+          /* element.castShadow = true;
+          element.receiveShadow = false; */
           element.scale.z = 1;
           //intersects[0].object.position.z = 0;
         });
+        ClientSVG3D.render();
       }
     } else {
       /*  if (ClientSVG3D.INTERSECTED)
@@ -1847,17 +1866,23 @@ export class ClientSVG3D extends Base {
           ClientSVG3D.INTERSECTED.currentHex; */
 
       const groupActive = ClientSVG3D.scene?.getObjectByName("active");
-      //console.log("MOUSE OUT", groupActive?.children);
+      console.log("MOUSE OUT ", groupActive?.children);
+      console.log("ClientSVG3D.unactiveColor ", ClientSVG3D.unactiveColor);
       groupActive?.children.forEach((element) => {
         (element as THREE.Mesh).material = new THREE.MeshPhongMaterial({
-          color: 0x111111,
-          specular: 0x666666,
-          emissive: 0x777777,
-          shininess: 6,
+          color: ClientSVG3D.unactiveColor,
+          /*           specular: 0x111111,
+          emissive: 0x111111,
+          shininess: 30, */
           opacity: 1.0,
           transparent: true,
           wireframe: false,
+          side: THREE.DoubleSide,
         });
+
+        /* element.castShadow = true;
+        element.receiveShadow = false; */
+
         element.scale.z = 1;
         //intersects[0].object.position.z = 0;
       });
@@ -1885,10 +1910,10 @@ export class ClientSVG3D extends Base {
     if (ClientSVG3D.DEBUG)
       console.log("clearSelectObject groupObjects", groupObjects);
     const materialClear = new THREE.MeshPhongMaterial({
-      color: 0x111111,
-      specular: 0x666666,
+      color: ClientSVG3D.unactiveColor,
+      /*       specular: 0x666666,
       emissive: 0x777777,
-      shininess: 6,
+      shininess: 6, */
       opacity: 1.0,
       transparent: true,
       wireframe: false,
@@ -1910,10 +1935,10 @@ export class ClientSVG3D extends Base {
     if (ClientSVG3D.DEBUG) console.log("clearColorActive");
     const groupActive = ClientSVG3D.scene?.getObjectByName("active");
     const materialClear = new THREE.MeshPhongMaterial({
-      color: 0x111111,
-      specular: 0x666666,
+      color: ClientSVG3D.unactiveColor,
+      /*       specular: 0x666666,
       emissive: 0x777777,
-      shininess: 6,
+      shininess: 6, */
       opacity: 1.0,
       transparent: true,
       wireframe: false,

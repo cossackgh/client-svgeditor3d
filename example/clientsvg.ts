@@ -13,7 +13,8 @@ import * as THREE from "three";
 export async function testmylib(): Promise<boolean> {
   console.log("testmylib");
   const nodeMap = document.getElementById("map3d");
-
+  const activeColorShop = 0x22dddd; // Color for active item
+  const unactiveColorShop = 0xaaaa22; // Color for active item
   const baloonTheme = {
     colorBG: "#eeeeee",
     colorTitle: "#000000",
@@ -32,6 +33,8 @@ export async function testmylib(): Promise<boolean> {
         title: "Пример карты", // Head Title this map
         signsLayer: "#signsLayer", // Layer name for signs
         objectsLayer: "#objectsL", // Layer name for objects
+        activeColor: activeColorShop, // Color for active item
+        unactiveColor: unactiveColorShop, // Color for active item
         interactiveLayer: "shops", // Layer name for interactive
         urlmap: "./public/grand-floor-1-final.svg", // Path to map svg
         isRemoveUnuseItem: false, // Remove unuse item from map?
@@ -237,7 +240,7 @@ export async function testmylib(): Promise<boolean> {
           const startS = await map1.runLoadSVG();
           addWall(map1, "floor-1");
           addFloor(map1, "floor-1");
-          map1.addSign({
+          /* map1.addSign({
             nameSign: "sign-1",
             urlSignImage: "./public/i-atm.png",
             position: new THREE.Vector3(420, 1200, 260),
@@ -256,22 +259,22 @@ export async function testmylib(): Promise<boolean> {
               castShadow: false,
               receiveShadow: false,
             },
-          });
+          }); */
           map1.addSign({
             nameSign: "sign-2",
             urlSignImage: "./public/i-atm.png",
-            width: 90,
+            width: 10,
             height: 100,
             depth: 100,
             position: new THREE.Vector3(650, 1200, 260),
             rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
             scale: new THREE.Vector3(100.0, 100.0, 100.0),
             material: new THREE.MeshPhongMaterial({
-              color: 0x770000,
+              color: 0xffffff,
               specular: 0x666666,
               emissive: 0x000000,
               shininess: 6,
-              opacity: 0.5,
+              opacity: 0.8,
               transparent: true,
               wireframe: false,
             }),
@@ -280,30 +283,7 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           });
-          map1.addSign({
-            nameSign: "sign-3",
-            urlSignImage: "./public/i-atm.png",
-            width: 20,
-            height: 100,
-            depth: 100,
-            position: new THREE.Vector3(850, 200, 360),
-            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
-            scale: new THREE.Vector3(100.0, 100.0, 100.0),
-            material: new THREE.MeshPhongMaterial({
-              color: 0x220099,
-              specular: 0x666666,
-              emissive: 0x000000,
-              shininess: 6,
-              opacity: 0.5,
-              transparent: true,
-              wireframe: false,
-            }),
-            shadow: {
-              castShadow: false,
-              receiveShadow: false,
-            },
-          });
-          /* const boxSign = map1.addBox({
+          const boxSign = map1.addBox({
             nameBox: "sign-1",
             width: 1,
             height: 100,
@@ -332,23 +312,40 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           });
-          const boxSignq = map1.addBox({
+          /*const boxV = map1.addBox({
             nameBox: "sign-2",
-            width: 90,
-            height: 100,
-            depth: 100,
-            position: new THREE.Vector3(650, 1200, 260),
+            width: 10,
+            height: 1900,
+            depth: 600,
+            position: new THREE.Vector3(650, 200, 300),
             rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
-            materialsSide: {
-              front: "./public/i-atm.png",
-              back: "",
-              left: "",
-              right: "",
-              up: "",
-              down: "",
-            },
+
             material: new THREE.MeshPhongMaterial({
               color: 0x770000,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.2,
+              transparent: true,
+              wireframe: false,
+              side: THREE.DoubleSide,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          }); */
+          /*           map1.addSign({
+            nameSign: "sign-3",
+            urlSignImage: "./public/i-atm.png",
+            width: 20,
+            height: 100,
+            depth: 100,
+            position: new THREE.Vector3(850, 200, 360),
+            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x220099,
               specular: 0x666666,
               emissive: 0x000000,
               shininess: 6,
@@ -361,28 +358,7 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           }); */
-          const boxBox = map1.addBox({
-            namegroup: map1.options?.objectsLayer?.substring(1),
-            nameBox: "box-red",
-            width: 90,
-            height: 100,
-            depth: 100,
-            position: new THREE.Vector3(650, 600, 260),
-            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
-            material: new THREE.MeshPhongMaterial({
-              color: 0x990000,
-              specular: 0x990000,
-              emissive: 0x220000,
-              shininess: 6,
-              opacity: 0.99,
-              transparent: true,
-              wireframe: false,
-            }),
-            shadow: {
-              castShadow: false,
-              receiveShadow: false,
-            },
-          });
+
           const objLine = new THREE.Group();
           objLine.name = "line-4511";
           /*       map.addPolyline({
@@ -600,10 +576,10 @@ export async function testmylib(): Promise<boolean> {
             bevelEnabled: false,
           },
           material: new THREE.MeshPhongMaterial({
-            color: 0x111111,
-            specular: 0x666666,
+            color: unactiveColorShop,
+            /*             specular: 0x666666,
             emissive: 0x777777,
-            shininess: 6,
+            shininess: 6, */
             opacity: 0.9,
             transparent: false,
             wireframe: false,
@@ -719,7 +695,7 @@ export async function testmylib(): Promise<boolean> {
     let zPozitions: number;
     switch (floor) {
       case "floor-1":
-        zPozitions = 0;
+        zPozitions = 1;
         break;
       case "floor-2":
         zPozitions = 30;
@@ -734,7 +710,7 @@ export async function testmylib(): Promise<boolean> {
         zPozitions = 120;
         break;
       default:
-        zPozitions = 0;
+        zPozitions = 1;
         break;
     }
     map.addSVGExtrudeObject({
@@ -754,7 +730,8 @@ export async function testmylib(): Promise<boolean> {
         specular: 0x222222,
         emissive: 0x777777,
         shininess: 6,
-        transparent: false,
+        opacity: 1.0,
+        transparent: true,
         wireframe: false,
       }),
       shadow: {
@@ -789,7 +766,7 @@ export async function testmylib(): Promise<boolean> {
       groupObjects: new THREE.Group(),
       settingsGroup: {
         nameGroup: "wall",
-        positions: new THREE.Vector3(0, 0, 0),
+        positions: new THREE.Vector3(0, 0, 6),
       },
       nameLayerSVG: "wall",
       settingsExtrude: {
@@ -800,10 +777,11 @@ export async function testmylib(): Promise<boolean> {
         color: 0x115281,
         specular: 0x666666,
         emissive: 0x777777,
-        shininess: 6,
+        shininess: 1,
         opacity: 0.2,
         transparent: true,
         wireframe: false,
+        side: THREE.DoubleSide,
       }),
       shadow: {
         castShadow: false,

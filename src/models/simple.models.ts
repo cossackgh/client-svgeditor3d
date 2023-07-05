@@ -37,6 +37,8 @@ export interface DataOptions {
   colorBG?: string;
   urlmap?: string;
   stringSVG?: string;
+  activeColor?: string | number;
+  unactiveColor?: string | number;
   interactiveLayer?: string;
   objectsLayer?: string;
   signsLayer?: string;
