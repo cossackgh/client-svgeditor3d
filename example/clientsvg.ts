@@ -488,16 +488,20 @@ export async function testmylib(): Promise<boolean> {
             position: new THREE.Vector3(1820, 660, 7),
           });
           const car1 = await map1.addGLB2({
-            urlOBJ: "./public/3dobj/elevator.glb",
+            urlOBJ: "./public/3dobj/ferrari.glb",
             nameObject: "car-01",
             //color: 0x850000,
             //urlMTL: "./public/3dobj/car-2.mtl",
             durationAnimation: 4,
-            rotation: new THREE.Vector3(radToDeg(90), radToDeg(0), radToDeg(0)),
+            rotation: new THREE.Vector3(
+              degToRad(90),
+              degToRad(30),
+              degToRad(0)
+            ),
             scale: new THREE.Vector3(10, 10, 10),
             position: new THREE.Vector3(1300, 230, 0),
           });
-          const bird = await map1.addGLB2({
+          /* const bird = await map1.addGLB2({
             urlOBJ: "./public/3dobj/flamingo.glb",
             nameObject: "bird-01",
             //color: 0x850000,
@@ -510,7 +514,7 @@ export async function testmylib(): Promise<boolean> {
             ),
             scale: new THREE.Vector3(0.4, 0.4, 0.4),
             position: new THREE.Vector3(1300, 230, 50),
-          });
+          }); */
 
           const boxMesh = map1.addBox({
             nameBox: "box-3521",
@@ -577,6 +581,42 @@ export async function testmylib(): Promise<boolean> {
             name: "car-02",
             position: new THREE.Vector3(1600, 230, 0),
           });
+          const video = document.getElementById("video");
+          const videoBox = map1.addBoxVideoTextire(video as HTMLVideoElement, {
+            nameBox: "box-VIDEO-2",
+            width: 500,
+            height: 50,
+            depth: 2,
+            position: new THREE.Vector3(500, 30, 0),
+            rotation: new THREE.Vector3(0, 0, 0),
+          });
+          map1.addClone({
+            meshSource: videoBox,
+            name: "box-VIDEO-3",
+            position: new THREE.Vector3(1000, 30, 0),
+          });
+          map1.addClone({
+            meshSource: videoBox,
+            name: "box-VIDEO-4",
+            position: new THREE.Vector3(1500, 30, 0),
+          });
+          map1.addClone({
+            meshSource: videoBox,
+            name: "box-VIDEO-5",
+            position: new THREE.Vector3(2000, 30, 0),
+          });
+          map1.addClone({
+            meshSource: videoBox,
+            name: "box-VIDEO-6",
+            position: new THREE.Vector3(2500, 30, 0),
+          });
+          map1.addClone({
+            meshSource: videoBox,
+            name: "box-VIDEO-7",
+            position: new THREE.Vector3(930, 250, -1),
+            rotation: new THREE.Vector3(degToRad(0), degToRad(0), degToRad(60)),
+          });
+
           console.log("SELECT MAP 1 =>> ", map1);
           break;
         case "floor-2":

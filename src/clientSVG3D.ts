@@ -2087,6 +2087,58 @@ export class ClientSVG3D extends Base {
     });
     //#ClientSVG3D.render();
   }
+  addBoxVideoTextire(videoSource: HTMLVideoElement, options: BoxParams) {
+    const video = videoSource as HTMLVideoElement;
+    const promise = video.play();
+    if (promise !== undefined) {
+      promise
+        .then((_) => {
+          // Autoplay started!
+          video.addEventListener("play", function () {
+            this.currentTime = 3;
+          });
+        })
+        .catch((error) => {
+          // Autoplay was prevented.
+          // Show a "Play" button so that user can start playback.
+        });
+    }
+
+    const texture = new THREE.VideoTexture(video);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const parameters = { color: 0xffffff, map: texture };
+    const materialV = new THREE.MeshLambertMaterial(parameters);
+    materialV.opacity = 1.0;
+    materialV.transparent = true;
+    const geometry = new THREE.BoxGeometry(
+      options.width,
+      options.height,
+      options.depth
+    );
+    const mesh = new THREE.Mesh(geometry, materialV);
+    mesh.name = options.nameBox ?? "Object-" + Math.random();
+    mesh.position.x = options.position?.x ?? 100;
+    mesh.position.y = options.position?.y ?? 100;
+    mesh.position.z = options.position?.z ?? 10;
+
+    mesh.scale.x = options.scale?.x ?? 1;
+    mesh.scale.y = options.scale?.y ?? 1;
+    mesh.scale.z = options.scale?.z ?? 1;
+    let groupBox: any = ClientSVG3D.scene?.getObjectByName(options.namegroup!);
+    if (groupBox === undefined) {
+      groupBox = ClientSVG3D.groupObjects;
+    }
+    ClientSVG3D.groupObjects?.add(mesh);
+    //ClientSVG3D.rootMap?.add(groupBox!);
+    if (ClientSVG3D.DEBUG) console.log("SCENE MESH Video = ", mesh);
+    if (ClientSVG3D.DEBUG)
+      console.log(
+        "SCENE MESH VideoClientSVG3D.rootMap = ",
+        ClientSVG3D.rootMap
+      );
+    return mesh;
+    //change_uvs( geometry, ux, uy, ox, oy );
+  }
   static render(): void {
     ClientSVG3D.renderer?.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
     const delta = ClientSVG3D.clock?.getDelta();
@@ -2344,6 +2396,7 @@ function calculateTangent(
   const tangent = path.getTangentAt(t / duration).normalize();
   return tangent;
 }
+
 function updateAnimation() {
   // Вычисление позиции объекта на пути
   //if (ClientSVG3D.DEBUG)
