@@ -9,12 +9,13 @@ import {
 import { dataShops2 } from "./dataItems";
 
 import * as THREE from "three";
+import { radToDeg } from "three/src/math/MathUtils";
 
 export async function testmylib(): Promise<boolean> {
   console.log("testmylib");
   const nodeMap = document.getElementById("map3d");
-  const activeColorShop = 0x22dddd; // Color for active item
-  const unactiveColorShop = 0xaaaa22; // Color for active item
+  const activeColorShop = 0xaa6666; // Color for active item
+  const unactiveColorShop = 0x898888; // Color for active item
   const baloonTheme = {
     colorBG: "#eeeeee",
     colorTitle: "#000000",
@@ -140,8 +141,11 @@ export async function testmylib(): Promise<boolean> {
       const startS = await map1.runLoadSVG();
       /* const startS = await map1.start();*/
       const initS = await map1.init();
+      const initAnim = await map1.animate(true);
+
       console.log("START MAP startS =>> ", startS);
       console.log("START MAP initS =>> ", initS);
+      console.log("START MAP initAnim =>> ", initAnim);
 
       map1.addCamera(paramCam);
       map1.addAmbientLight(paramAmbientLight);
@@ -152,11 +156,16 @@ export async function testmylib(): Promise<boolean> {
         isZoom: true,
         isPan: true,
         isRotate: false,
-        minDistance: 900,
-        maxDistance: 3000,
+        minDistance: 300,
+        maxDistance: 1600,
+        maxOrbitPanX: 400,
+        maxOrbitPanY: 300,
+        minOrbitPanX: -400,
+        minOrbitPanY: -300,
         maxPolarAngle: Math.PI / 1.4,
         target: targetCam,
       });
+
       selectMap("floor-1");
     }
 
@@ -230,6 +239,7 @@ export async function testmylib(): Promise<boolean> {
       switch (floorMap) {
         case "floor-1":
           console.log("objectDeleted =>> ", objectDeleted);
+          map1.clearAnimationArray();
           if (objectDeleted !== undefined) map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-1-final.svg";
           map1.options.paramsMap = {
@@ -260,7 +270,7 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           }); */
-          map1.addSign({
+          const objAtm = map1.addSign({
             nameSign: "sign-2",
             urlSignImage: "./public/i-atm.png",
             width: 10,
@@ -283,6 +293,8 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           });
+          console.log("objAtm =>> ", objAtm);
+
           const boxSign = map1.addBox({
             nameBox: "sign-1",
             width: 1,
@@ -312,52 +324,88 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           });
-          /*const boxV = map1.addBox({
-            nameBox: "sign-2",
-            width: 10,
-            height: 1900,
-            depth: 600,
-            position: new THREE.Vector3(650, 200, 300),
-            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+          /*const loadObjAnim = await map1.addFBX({
+            urlOBJ: "./public/3dobj/lift.fbx",
+            //color: 0x850000,
+            //urlMTL: "./public/3dobj/car-2.mtl",
+            //rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
+            scale: new THREE.Vector3(10, 20, 10),
+            position: new THREE.Vector3(600, 400, 60),
+            //isAnimation: true,
+          });
+          console.log("loadObjAnim =>> ", loadObjAnim); */
+          const liftf1 = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/lift-bl2.glb",
+            nameObject: "lift-1",
+            durationAnimation: 6,
+            //color: 0x850000,
+            //urlMTL: "./public/3dobj/car-2.mtl",
+            rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
+            scale: new THREE.Vector3(8, 8, 8),
+            position: new THREE.Vector3(1500, 830, 10),
+            //isAnimation: true,
+          });
+          const loadObjAnim1 = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/flamingo.glb",
+            nameObject: "Flamingo",
+            //color: 0x850000,
+            //urlMTL: "./public/3dobj/car-2.mtl",
+            durationAnimation: 2,
+            rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
+            scale: new THREE.Vector3(0.4, 0.4, 0.4),
+            position: new THREE.Vector3(1300, 830, 200),
+            //isAnimation: true,
+          });
 
-            material: new THREE.MeshPhongMaterial({
-              color: 0x770000,
-              specular: 0x666666,
-              emissive: 0x000000,
-              shininess: 6,
-              opacity: 0.2,
-              transparent: true,
-              wireframe: false,
-              side: THREE.DoubleSide,
-            }),
-            shadow: {
-              castShadow: false,
-              receiveShadow: false,
-            },
-          }); */
-          /*           map1.addSign({
-            nameSign: "sign-3",
-            urlSignImage: "./public/i-atm.png",
-            width: 20,
-            height: 100,
-            depth: 100,
-            position: new THREE.Vector3(850, 200, 360),
-            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
-            scale: new THREE.Vector3(100.0, 100.0, 100.0),
-            material: new THREE.MeshPhongMaterial({
-              color: 0x220099,
-              specular: 0x666666,
-              emissive: 0x000000,
-              shininess: 6,
-              opacity: 0.5,
-              transparent: true,
-              wireframe: false,
-            }),
-            shadow: {
-              castShadow: false,
-              receiveShadow: false,
-            },
-          }); */
+          const getObj = map1.findObjectByName("Flamingo");
+
+          map1.addClone({
+            meshSource: liftf1,
+            name: "lift-2",
+            duration: 6,
+            position: new THREE.Vector3(2100, 830, 10),
+          });
+          map1.addClone({
+            meshSource: liftf1,
+            name: "lift-3",
+            duration: 6,
+            position: new THREE.Vector3(1250, 380, 10),
+            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 1, 0),
+          });
+          map1.addClone({
+            meshSource: liftf1,
+            name: "lift-4",
+            duration: 6,
+            position: new THREE.Vector3(1970, 450, 10),
+            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 4, 0),
+          });
+          map1.addClone({
+            meshSource: liftf1,
+            name: "lift-5",
+            duration: 6,
+            position: new THREE.Vector3(2055, 535, 10),
+            rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 3.3, 0),
+          });
+
+          const treeObj1f = await map1.addObject({
+            nameObject: "tree-01",
+            urlOBJ: "./public/3dobj/tree-1.obj",
+            urlMTL: "./public/3dobj/tree-2.mtl",
+            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 4, 0),
+            scale: new THREE.Vector3(3.0, 3.0, 3.0),
+            position: new THREE.Vector3(1100, 430, 0),
+          });
+          console.log("treeObj =>> ", treeObj1f);
+          map1.addClone({
+            meshSource: treeObj1f,
+            name: "tree-02",
+            position: new THREE.Vector3(70, 150, 0),
+          });
+          map1.addClone({
+            meshSource: treeObj1f,
+            name: "tree-03",
+            position: new THREE.Vector3(150, 290, 0),
+          });
 
           const objLine = new THREE.Group();
           objLine.name = "line-4511";
@@ -370,7 +418,7 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           }); */
-          map1.addTubePath({
+          /*map1.addTubePath({
             nameGroupInsert: "signsLayer",
             nameLine: "line rt-0",
             points: [
@@ -396,7 +444,7 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           });
-          map1.addTubePath({
+           map1.addTubePath({
             nameGroupInsert: "signsLayer3",
             nameLine: "line rt-1",
             points: [
@@ -421,19 +469,118 @@ export async function testmylib(): Promise<boolean> {
               castShadow: true,
               receiveShadow: false,
             },
-          });
+          }); */
 
-          map1.addObject({
+          const cafe1 = await map1.addObject({
             nameObject: "cafe-01",
-            urlOBJ: "./public/3dobj/obj/cafe-1.obj",
-            urlMTL: "./public/3dobj/obj/cafe-1.mtl",
+            urlOBJ: "./public/3dobj/obj/cafe.obj",
+            urlMTL: "./public/3dobj/obj/cafe.mtl",
             rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 4, 0),
             scale: new THREE.Vector3(100.0, 100.0, 100.0),
-            position: new THREE.Vector3(1828, 668, 10),
+            position: new THREE.Vector3(470, 390, 10),
+          });
+          const cafe2 = await map1.addObject({
+            nameObject: "cafe-01",
+            urlOBJ: "./public/3dobj/obj/cafe.obj",
+            urlMTL: "./public/3dobj/obj/cafe.mtl",
+            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 2, 0),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            position: new THREE.Vector3(1820, 660, 7),
+          });
+          const car1 = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/elevator.glb",
+            nameObject: "car-01",
+            //color: 0x850000,
+            //urlMTL: "./public/3dobj/car-2.mtl",
+            durationAnimation: 4,
+            rotation: new THREE.Vector3(radToDeg(90), radToDeg(0), radToDeg(0)),
+            scale: new THREE.Vector3(10, 10, 10),
+            position: new THREE.Vector3(1300, 230, 0),
+          });
+          const bird = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/flamingo.glb",
+            nameObject: "bird-01",
+            //color: 0x850000,
+            //urlMTL: "./public/3dobj/car-2.mtl",
+            durationAnimation: 1,
+            rotation: new THREE.Vector3(
+              degToRad(0),
+              degToRad(90),
+              degToRad(180)
+            ),
+            scale: new THREE.Vector3(0.4, 0.4, 0.4),
+            position: new THREE.Vector3(1300, 230, 50),
+          });
+
+          const boxMesh = map1.addBox({
+            nameBox: "box-3521",
+            width: 20,
+            height: 50,
+            depth: 20,
+            position: new THREE.Vector3(1300, 230, 60),
+            rotation: new THREE.Vector3(0, 0, 0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x005500,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.8,
+              transparent: true,
+              wireframe: false,
+            }),
+          });
+          const pathM = [
+            new THREE.Vector2(440, 980),
+            new THREE.Vector2(440, 920),
+            new THREE.Vector2(1300, 920),
+            new THREE.Vector2(1500, 920),
+            new THREE.Vector2(1300, 920),
+            new THREE.Vector2(440, 920),
+            new THREE.Vector2(440, 980),
+          ];
+          const pathM3 = [
+            new THREE.Vector2(1440, 980),
+            new THREE.Vector2(1440, 920),
+            new THREE.Vector2(2200, 920),
+            new THREE.Vector2(2400, 980),
+            new THREE.Vector2(2400, 1000),
+            new THREE.Vector2(2000, 1200),
+            new THREE.Vector2(1800, 1100),
+            new THREE.Vector2(1440, 980),
+          ];
+          const pathM4 = [
+            new THREE.Vector3(1440, 980, 50),
+            new THREE.Vector3(1440, 920, 50),
+            new THREE.Vector3(2200, 920, 50),
+            new THREE.Vector3(2400, 980, 90),
+            new THREE.Vector3(2400, 1000, 220),
+            new THREE.Vector3(2000, 1200, 90),
+            new THREE.Vector3(1800, 1100, 70),
+            new THREE.Vector3(1440, 980, 50),
+          ];
+          /* map1.addObjectToAnimate(
+            "carmovie",
+            car1,
+            map1.createPath(pathM),
+            0,
+            40
+          ); */
+          map1.addObjectToAnimate(
+            "carmovie3",
+            boxMesh,
+            map1.createPath(pathM4),
+            0,
+            20
+          );
+          map1.addClone({
+            meshSource: car1,
+            name: "car-02",
+            position: new THREE.Vector3(1600, 230, 0),
           });
           console.log("SELECT MAP 1 =>> ", map1);
           break;
         case "floor-2":
+          map1.clearAnimationArray();
           map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-2-final.svg";
           map1.options.paramsMap = {
@@ -444,66 +591,83 @@ export async function testmylib(): Promise<boolean> {
           await map1.runLoadSVG();
           addWall(map1, "floor-2");
           addFloor(map1, "floor-2");
+          const liftf2 = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/lift-bl2.glb",
+            nameObject: "lift-1",
+            durationAnimation: 6,
+            //color: 0x850000,
+            //urlMTL: "./public/3dobj/car-2.mtl",
+            rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
+            scale: new THREE.Vector3(8, 8, 8),
+            position: new THREE.Vector3(1500, 830, 10),
+            //isAnimation: true,
+          });
 
-          /*  map1.addObject({
-            urlOBJ: "./public/3dobj/obj/cafe.obj",
-            urlMTL: "./public/3dobj/obj/cafe.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(-30, 83, 27),
+          map1.addClone({
+            meshSource: liftf2,
+            name: "lift-2",
+            duration: 6,
+            position: new THREE.Vector3(2100, 830, 10),
           });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(-20, 10, 27),
+          map1.addClone({
+            meshSource: liftf2,
+            name: "lift-3",
+            duration: 6,
+            position: new THREE.Vector3(1250, 380, 10),
+            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 1, 0),
           });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(-50, 45, 27),
+          map1.addClone({
+            meshSource: liftf2,
+            name: "lift-4",
+            duration: 6,
+            position: new THREE.Vector3(1970, 450, 10),
+            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 4, 0),
           });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 1.25, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(267, 58, 27),
+          map1.addClone({
+            meshSource: liftf2,
+            name: "lift-5",
+            duration: 6,
+            position: new THREE.Vector3(2055, 535, 10),
+            rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 3.3, 0),
           });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 4, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(336, -10, 27),
+          const treeObj2f = await map1.addObject({
+            nameObject: "tree-01",
+            urlOBJ: "./public/3dobj/tree-1.obj",
+            urlMTL: "./public/3dobj/tree-2.mtl",
+            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 4, 0),
+            scale: new THREE.Vector3(3.0, 3.0, 3.0),
+            position: new THREE.Vector3(1100, 430, 0),
           });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/elevator.obj",
-            urlMTL: "./public/3dobj/obj/elevator.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, Math.PI / 1.52, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(-285, 47, 18),
+          console.log("treeObj =>> ", treeObj2f);
+          map1.addClone({
+            meshSource: treeObj2f,
+            name: "tree-02",
+            position: new THREE.Vector3(70, 150, 0),
           });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/lift.obj",
-            urlMTL: "./public/3dobj/obj/lift.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 0.01, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(284, 4, 27),
+          map1.addClone({
+            meshSource: treeObj2f,
+            name: "tree-03",
+            position: new THREE.Vector3(150, 290, 0),
           });
-          map1.addObject({
-            urlOBJ: "./public/3dobj/obj/lift.obj",
-            urlMTL: "./public/3dobj/obj/lift.mtl",
-            rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 1.0, 0),
-            scale: new THREE.Vector3(50.0, 50.0, 50.0),
-            position: new THREE.Vector3(326, 41, 27),
-          }); */
+          const car21 = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/ferrari.glb",
+            nameObject: "car-01",
+            //color: 0x850000,
+            //urlMTL: "./public/3dobj/car-2.mtl",
+            durationAnimation: 4,
+            rotation: new THREE.Vector3(Math.PI / 2, 0.38, 0),
+            scale: new THREE.Vector3(20, 20, 20),
+            position: new THREE.Vector3(1300, 230, 0),
+          });
+          map1.addClone({
+            meshSource: car21,
+            name: "car-02",
+            position: new THREE.Vector3(1600, 230, 0),
+          });
           console.log("SELECT MAP 2 =>> ", map1);
           break;
         case "floor-3":
+          map1.clearAnimationArray();
           map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-3-final.svg";
           map1.options.paramsMap = {
@@ -517,6 +681,7 @@ export async function testmylib(): Promise<boolean> {
           addRoof(map1, "floor-3");
           break;
         case "floor-4":
+          map1.clearAnimationArray();
           map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-4-final.svg";
           map1.options.paramsMap = {
@@ -530,6 +695,7 @@ export async function testmylib(): Promise<boolean> {
           addRoof(map1, "floor-4");
           break;
         case "floor-5":
+          map1.clearAnimationArray();
           map1.clearThree(objectDeleted);
           map1.options.urlmap = "./public/grand-floor-5-final.svg";
           map1.options.paramsMap = {
@@ -575,15 +741,14 @@ export async function testmylib(): Promise<boolean> {
             depth: 6,
             bevelEnabled: false,
           },
-          material: new THREE.MeshPhongMaterial({
+          /* material: new THREE.MeshPhongMaterial({
             color: unactiveColorShop,
-            /*             specular: 0x666666,
-            emissive: 0x777777,
-            shininess: 6, */
-            opacity: 0.9,
+            //specular: 0x222222,
+            //emissive: 0x777777,
+            //shininess: 6,
             transparent: false,
             wireframe: false,
-          }),
+          }), */
           shadow: {
             castShadow: true,
             receiveShadow: false,
@@ -892,6 +1057,10 @@ export async function testmylib(): Promise<boolean> {
   }
   function clearSelectObject(map: ClientSVG3D): void {
     map.clearSelectObject(map.options?.signsLayer?.substring(1) as string);
+  }
+  function degToRad(degrees: number): number {
+    const radians = (degrees * Math.PI) / 180;
+    return radians;
   }
   function gotoURLClick(dataelement: any): void {
     console.log("gotoURLClick element = ", dataelement);

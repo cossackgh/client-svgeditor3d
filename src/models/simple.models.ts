@@ -44,6 +44,7 @@ export interface DataOptions {
   signsLayer?: string;
   isRemoveUnuseItem?: boolean;
   isHoverEnable?: boolean;
+  isAnimate?: boolean;
   funcClick?: () => void;
   funcParams?: any;
   paramsMap?: ParamsMap;
@@ -146,8 +147,20 @@ export interface LoadObject {
   rotationGroup?: THREE.Vector3;
   scaleGroup?: THREE.Vector3;
   isAnimation?: boolean;
+  durationAnimation?: number;
+  clipAnimation?: number;
   isLoopAnimation?: boolean;
   pathAnimation?: string;
+}
+export interface CloneObject {
+  meshSource: any;
+  name?: string;
+  clip?: any;
+  speed?: number;
+  duration?: number;
+  position: THREE.Vector3;
+  rotation?: THREE.Vector3;
+  scale?: THREE.Vector3;
 }
 export interface ParamsMap {
   positions?: THREE.Vector3;
@@ -174,7 +187,10 @@ export interface OptionsExtrudeObject {
   settingsGroup?: GroupSettings;
   nameLayerSVG?: string;
   settingsExtrude?: ExtrudeSettings;
-  material?: THREE.Material;
+  material?:
+    | THREE.MeshBasicMaterial
+    | THREE.MeshLambertMaterial
+    | THREE.MeshPhongMaterial;
   shadow?: {
     castShadow?: boolean;
     receiveShadow?: boolean;
@@ -365,6 +381,13 @@ export interface BoxSideTextures {
   down?: string;
   left?: string;
   right?: string;
+}
+export interface PathOptions {
+  namePath?: string;
+  path?: THREE.Path | THREE.CatmullRomCurve3;
+  object?: THREE.Object3D | THREE.Group | THREE.Mesh;
+  t?: number;
+  duration?: number;
 }
 export interface OptionsSpotLight {
   name?: string;
