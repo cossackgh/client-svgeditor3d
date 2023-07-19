@@ -22,7 +22,7 @@ import type {
   TubeOptions,
   SignOptions,
   CloneObject,
-  PathOptions,
+  AnimationOptions,
 } from "./models/simple.models";
 //import { SvgMap } from './_privatemodule/svg'
 import Base from "./base";
@@ -89,7 +89,6 @@ export class ClientSVG3D extends Base {
     top: 10,
     left: 20,
   };
-
   isMobile: boolean | undefined;
   static DEBUG: boolean | undefined = false;
   static evCache: unknown[] | undefined;
@@ -134,11 +133,13 @@ export class ClientSVG3D extends Base {
   static outlinePass: OutlinePass | null;
   static effect: OutlineEffect | null;
   static isAnimate: boolean;
-  static arrayPathsAnimation: PathOptions[] = [];
+  static arrayPathsAnimation: AnimationOptions[] = [];
   static duration = 60;
   static t = 0;
+  static tt = 0;
+  static eventEmitter: any;
   static place_1_call() {
-    console.log("place to call");
+    if (ClientSVG3D.DEBUG) console.log("place to call");
     // throw new Error("Method not implemented.");
   }
   constructor(
@@ -400,8 +401,9 @@ export class ClientSVG3D extends Base {
     });
   }
   addCamera(optionsCam: OptionsCam | undefined): void {
-    console.log("addCamera", optionsCam);
-    console.log("addCamera ClientSVG3D.camera", ClientSVG3D.camera);
+    if (ClientSVG3D.DEBUG) console.log("addCamera", optionsCam);
+    if (ClientSVG3D.DEBUG)
+      console.log("addCamera ClientSVG3D.camera", ClientSVG3D.camera);
     ClientSVG3D.camera!.fov = optionsCam?.fov ?? 55;
     ClientSVG3D.camera!.aspect =
       optionsCam?.aspect ?? window.innerWidth / window.innerHeight;
@@ -640,10 +642,11 @@ export class ClientSVG3D extends Base {
     const materialBoxDown =
       boxparams.material?.clone() ?? new THREE.MeshPhongMaterial();
     textureFront = null;
-    console.log(
-      " ### ==== #### addBox materialBoxFront  = > ",
-      materialBoxFront
-    );
+    if (ClientSVG3D.DEBUG)
+      console.log(
+        " ### ==== #### addBox materialBoxFront  = > ",
+        materialBoxFront
+      );
     if (materialBoxFront !== undefined && materialBoxFront !== null) {
       textureFront = textureLoader.load(
         boxparams.materialsSide?.front as string,
@@ -845,14 +848,14 @@ export class ClientSVG3D extends Base {
 
   findObjectByName(name: string): THREE.Object3D | undefined {
     const object = ClientSVG3D.rootMap?.getObjectByName(name);
-    console.log("findObjectByName", object);
+    if (ClientSVG3D.DEBUG) console.log("findObjectByName", object);
     return object;
   }
   addClone(options: CloneObject): void {
-    console.log("addClone mesh =", options.meshSource);
+    if (ClientSVG3D.DEBUG) console.log("addClone mesh =", options.meshSource);
     const mesh = options.meshSource.clone();
     mesh.name = options.name ?? "clone - " + Math.random() * 1000;
-    console.log("addClone meshClone =", mesh);
+    if (ClientSVG3D.DEBUG) console.log("addClone meshClone =", mesh);
     if (
       Array.isArray(options.meshSource.animations) &&
       options.meshSource.animations.length > 0
@@ -1036,7 +1039,7 @@ export class ClientSVG3D extends Base {
     const loader = new FontLoader();
     loader.load(optionsText.font, function (response: any) {
       const font = response;
-      //console.log(" ### ==== #### addText font = > ", font);
+      //if (ClientSVG3D.DEBUG) console.log(" ### ==== #### addText font = > ", font);
       const textGeo = new TextGeometry(optionsText.text, {
         font: font,
         size: optionsText.size,
@@ -1212,8 +1215,9 @@ export class ClientSVG3D extends Base {
   ): Mesh<BufferGeometry, Material | Material[]> {
     const classOptions = this.options;
 
-    console.log("urlSignImage = ", optionsSign.nameSign);
-    console.log("ClientSVG3D.groupSigns = ", ClientSVG3D.groupSigns?.name);
+    if (ClientSVG3D.DEBUG) console.log("urlSignImage = ", optionsSign.nameSign);
+    if (ClientSVG3D.DEBUG)
+      console.log("ClientSVG3D.groupSigns = ", ClientSVG3D.groupSigns?.name);
 
     const boxSign = this.addBox({
       namegroup: ClientSVG3D.groupSigns?.name,
@@ -1250,8 +1254,7 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.groupSigns?.add(boxSign);
     ClientSVG3D.rootMap?.add(ClientSVG3D.groupSigns!);
     ClientSVG3D.scene?.add(ClientSVG3D.rootMap!);
-    //#ClientSVG3D.render();
-    console.log("boxSign = ", boxSign);
+    if (ClientSVG3D.DEBUG) console.log("boxSign = ", boxSign);
     return boxSign;
   }
   addSignToSVGPoint(optionsSign: SignOptions, idPoint: string): void {
@@ -1271,7 +1274,8 @@ export class ClientSVG3D extends Base {
             for (let j = 0; j < simpleShapes.length; j++) {
               if (path.userData.node.nodeName === "circle") {
                 if (path.userData.node.id === idPoint) {
-                  console.log("urlSignImage = ", optionsSign.urlSignImage);
+                  if (ClientSVG3D.DEBUG)
+                    console.log("urlSignImage = ", optionsSign.urlSignImage);
                   const boxSign = this.addBox({
                     nameBox:
                       optionsSign.nameSign ?? "sign" + Math.random() * 1000,
@@ -1308,7 +1312,7 @@ export class ClientSVG3D extends Base {
                       receiveShadow: false,
                     },
                   });
-                  console.log("boxSign = ", boxSign);
+                  if (ClientSVG3D.DEBUG) console.log("boxSign = ", boxSign);
                   ClientSVG3D.groupSigns?.add(boxSign);
                 }
               }
@@ -1336,7 +1340,8 @@ export class ClientSVG3D extends Base {
         for (let j = 0; j < simpleShapes.length; j++) {
           if (path.userData.node.nodeName === "circle") {
             if (path.userData.node.id === idPoint) {
-              console.log("urlSignImage = ", optionsSign.urlSignImage);
+              if (ClientSVG3D.DEBUG)
+                console.log("urlSignImage = ", optionsSign.urlSignImage);
               const boxSign = this.addBox({
                 nameBox: optionsSign.nameSign ?? "sign" + Math.random() * 1000,
                 width: 0,
@@ -1372,7 +1377,7 @@ export class ClientSVG3D extends Base {
                   receiveShadow: false,
                 },
               });
-              console.log("boxSign = ", boxSign);
+              if (ClientSVG3D.DEBUG) console.log("boxSign = ", boxSign);
               ClientSVG3D.groupSigns?.add(boxSign);
             }
           }
@@ -1385,18 +1390,21 @@ export class ClientSVG3D extends Base {
     }
   }
   addGroupToScene(group: THREE.Group): void {
-    console.log(
-      " ### ==== #### addGroupToScene rootMap = > ",
-      ClientSVG3D.scene
-    );
-    console.log(" ### ==== #### addGroupToScene group = > ", group);
+    if (ClientSVG3D.DEBUG)
+      console.log(
+        " ### ==== #### addGroupToScene rootMap = > ",
+        ClientSVG3D.scene
+      );
+    if (ClientSVG3D.DEBUG)
+      console.log(" ### ==== #### addGroupToScene group = > ", group);
     const groupRoot = ClientSVG3D.scene?.getObjectByName("rootMap");
     const geometry = new THREE.BoxGeometry(100, 100, 100);
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
     cube.name = "cubeADD";
 
-    console.log(" ### ==== #### addGroupToScene groupRoot = > ", groupRoot);
+    if (ClientSVG3D.DEBUG)
+      console.log(" ### ==== #### addGroupToScene groupRoot = > ", groupRoot);
     ClientSVG3D.scene?.add(groupRoot!);
     groupRoot?.add(cube);
     //ClientSVG3D.scene?.add(cube);
@@ -1423,7 +1431,7 @@ export class ClientSVG3D extends Base {
               options.urlOBJ,
               (object: THREE.Object3D<THREE.Event>) => {
                 object.traverse((child: any) => {
-                  /*                 if (ClientSVG3D.DEBUG)
+                  /*if (ClientSVG3D.DEBUG)
                   console.log(
                     " ### ==== #### addObjects load OBJ With Material = > ",
                     child
@@ -1685,16 +1693,6 @@ export class ClientSVG3D extends Base {
       console.log(" ### ==== #### addSVGExtrudeObject options = > ", options);
     groupSVGExtrude.name = options.settingsGroup?.nameGroup as string;
     groupSVGExtrude.position.z = options.settingsGroup?.positions?.z as number;
-    /*groupSVGExtrude.position.set(
-      options.settingsGroup?.positions?.x as number,
-      options.settingsGroup?.positions?.y as number,
-      options.settingsGroup?.positions?.z as number
-    );
-    groupSVGExtrude.scale.set(
-      options.settingsGroup?.scales?.x as number,
-      options.settingsGroup?.scales?.y as number,
-      options.settingsGroup?.scales?.z as number
-    ); */
     if (ClientSVG3D.parseSVGMap.length === 0) {
       loaderSVG.load(
         classOptions.urlmap,
@@ -1717,8 +1715,9 @@ export class ClientSVG3D extends Base {
                 const extrMaterial = new THREE.MeshPhongMaterial({
                   color: ClientSVG3D.unactiveColor,
                   opacity: 1.0,
-                  transparent: false,
+                  transparent: true,
                   wireframe: false,
+                  depthWrite: false,
                 });
 
                 const mesh = new THREE.Mesh(
@@ -1805,7 +1804,8 @@ export class ClientSVG3D extends Base {
   }
 
   onProgress(xhr: { loaded: number; total: number }) {
-    console.log((xhr.loaded / xhr.total) * 100 + "% loaded ALL");
+    if (ClientSVG3D.DEBUG)
+      console.log((xhr.loaded / xhr.total) * 100 + "% loaded ALL");
     //return "OK";
   }
   onError(error: any) {
@@ -1820,24 +1820,16 @@ export class ClientSVG3D extends Base {
     const group = ClientSVG3D.scene?.getObjectByName("active");
 
     if (ClientSVG3D.DEBUG)
-      console.log("selectItem ClientSVG3D.scene => ", ClientSVG3D.scene);
+      if (ClientSVG3D.DEBUG)
+        console.log("selectItem ClientSVG3D.scene => ", ClientSVG3D.scene);
     if (group) {
       const mesh = group.getObjectByName(id);
       if (ClientSVG3D.DEBUG) console.log("selectItem group => ", group);
       if (ClientSVG3D.DEBUG) console.log("selectItem mesh => ", mesh);
-      if (mesh) {
-        (mesh as THREE.Mesh).material = new THREE.MeshPhongMaterial({
-          color: ClientSVG3D.activeColor,
-          /*           specular: 0x666666,
-          emissive: 0x003333,
-          shininess: 6, */
-          opacity: 1.0,
-          transparent: false,
-          wireframe: false,
-        });
+      if (mesh instanceof THREE.Mesh) {
+        mesh.material.color = new THREE.Color(ClientSVG3D.activeColor);
         mesh.scale.z = 1.5;
         if (ClientSVG3D.DEBUG) console.log("mesh => ", mesh);
-        //#ClientSVG3D.render();
       }
     }
   }
@@ -1906,15 +1898,14 @@ export class ClientSVG3D extends Base {
       classOptions.urlmap,
       (data: { paths: ShapePath[] }) => {
         ClientSVG3D.parseSVGMap = data.paths;
-        if (ClientSVG3D.DEBUG)
-          if (ClientSVG3D.DEBUG)
-            //console.log("    ## LOAD All paths => ", ClientSVG3D.parseSVGMap);
-            //this.clearThree(ClientSVG3D.scene);
-            //this.init();
-            //this.animate();
+        //if (ClientSVG3D.DEBUG)
+        //console.log("    ## LOAD All paths => ", ClientSVG3D.parseSVGMap);
+        //this.clearThree(ClientSVG3D.scene);
+        //this.init();
+        //this.animate();
 
-            //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);
-            console.log("start  this.options", this.options);
+        //document.addEventListener("mousemove", ClientSVG3D.myMouseMove);
+        if (ClientSVG3D.DEBUG) console.log("start  this.options", this.options);
         if (this.options.isHoverEnable) {
           this.node.addEventListener(
             "mousemove",
@@ -1947,17 +1938,17 @@ export class ClientSVG3D extends Base {
     // the following line would stop any other event handler from firing
     // (such as the mouse's TrackballControls)
     //event.preventDefault();
-    //console.log("mouse move");
+    //if (ClientSVG3D.DEBUG) console.log("mouse move");
     // update the mouse variable
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const container = ClientSVG3D.nodeMap;
-    /* console.log("container => ", container);
-        console.log("event.clientX => ", event.clientX);
-    console.log("event.screenX => ", event.screenX);
-    console.log("event.clientY => ", event.clientY);
-    console.log("this.node.clientWidth => ", container.clientWidth);
-    console.log("self.innerWidth => ", self.innerWidth);
-    console.log("window.innerHeight => ", window.innerHeight); */
+    /* if (ClientSVG3D.DEBUG) console.log("container => ", container);
+        if (ClientSVG3D.DEBUG) console.log("event.clientX => ", event.clientX);
+    if (ClientSVG3D.DEBUG) console.log("event.screenX => ", event.screenX);
+    if (ClientSVG3D.DEBUG) console.log("event.clientY => ", event.clientY);
+    if (ClientSVG3D.DEBUG) console.log("this.node.clientWidth => ", container.clientWidth);
+    if (ClientSVG3D.DEBUG) console.log("self.innerWidth => ", self.innerWidth);
+    if (ClientSVG3D.DEBUG) console.log("window.innerHeight => ", window.innerHeight); */
 
     ClientSVG3D.mouse.x =
       ((event.clientX - container?.offsetLeft + 0) / container?.offsetWidth) *
@@ -1982,56 +1973,73 @@ export class ClientSVG3D extends Base {
     );
 
     const groupActive = ClientSVG3D.scene?.getObjectByName("active");
-    //console.log("groupActive = ", groupActive?.children);
-    //console.log("ClientSVG3D.scene.children = ", ClientSVG3D.scene.children);
+    //if (ClientSVG3D.DEBUG) console.log("groupActive = ", groupActive?.children);
+    //if (ClientSVG3D.DEBUG) console.log("ClientSVG3D.scene.children = ", ClientSVG3D.scene.children);
     if (groupActive!.children.length > 0) {
       const intersects = ray.intersectObjects(groupActive!.children, true);
 
-      /* console.log("ClientSVG3D.INTERSECTED = ", ClientSVG3D.INTERSECTED); */
+      /* if (ClientSVG3D.DEBUG) console.log("ClientSVG3D.INTERSECTED = ", ClientSVG3D.INTERSECTED); */
       if (intersects.length > 0) {
-        //console.log("intersects = ", intersects);
+        if (ClientSVG3D.DEBUG)
+          console.log("intersects = ", intersects[0].object.name);
+        ClientSVG3D._someeventHandler(intersects[0].object.name);
         ClientSVG3D.hoverCurrentItem = intersects[0];
-        intersects[0].object.scale.z = 2.5;
-        /*       ClientSVG3D.outlinePass.selectedObjects = intersects[0].object;
-      console.log("    ## outlinePass => ", ClientSVG3D.outlinePass); */
+        intersects[0].object.scale.z = 2.9;
+        /*ClientSVG3D.outlinePass.selectedObjects = intersects[0].object;
+        if (ClientSVG3D.DEBUG) console.log("    ## outlinePass => ", ClientSVG3D.outlinePass); */
         /*intersects[0].object.position.z = -30; */
-        (intersects[0].object as THREE.Mesh).material =
-          new THREE.MeshPhongMaterial({
-            color: ClientSVG3D.activeColor,
-            /*           specular: 0x666666,
-          emissive: 0x003333,
-          shininess: 6, */
-            opacity: 1.0,
-            transparent: true,
-            wireframe: false,
-            side: THREE.DoubleSide,
-          });
-        /*       intersects[0].object.castShadow = true;
-      intersects[0].object.receiveShadow = false; */
+        /* (intersects[0].object as THREE.Mesh).material =
+            new THREE.MeshPhongMaterial({
+              color: ClientSVG3D.activeColor,
+              //specular: 0x666666,
+              //emissive: 0x003333,
+              //shininess: 6,
+              opacity: 1.0,
+              transparent: true,
+              wireframe: false,
+              side: THREE.DoubleSide,
+              depthWrite: false,
+            }); */
+        if (intersects[0].object instanceof THREE.Mesh) {
+          if (ClientSVG3D.DEBUG)
+            console.log(
+              "MOUSE OVER intersects[0].object = ",
+              intersects[0].object.material.color
+            );
+          if (ClientSVG3D.DEBUG)
+            console.log(
+              "MOUSE OVER Element ClientSVG3D.unactiveColor = ",
+              ClientSVG3D.activeColor
+            );
+          if (intersects[0].object instanceof THREE.Mesh) {
+            intersects[0].object.material.color = new THREE.Color(
+              ClientSVG3D.activeColor
+            );
+          }
+        }
+
         if (ClientSVG3D.INTERSECTED != intersects[0].object) {
           if (ClientSVG3D.INTERSECTED) {
-            //console.log("MOUSE OUT");
-            /*           ClientSVG3D.INTERSECTED.material.color = new THREE.Color(
-            "rgb(150,67,150)"
-          ); */
           }
           ClientSVG3D.INTERSECTED = intersects[0].object;
           if (ClientSVG3D.DEBUG)
             console.log("MOUSE OVER", intersects[0].object.name);
           const groupActive = ClientSVG3D.scene?.getObjectByName("active");
           groupActive?.children.forEach((element) => {
-            (element as THREE.Mesh).material = new THREE.MeshPhongMaterial({
-              color: ClientSVG3D.unactiveColor,
-              /*             specular: 0x666666,
-            emissive: 0x777777,
-            shininess: 6, */
-              opacity: 1.0,
-              transparent: true,
-              wireframe: false,
-              side: THREE.DoubleSide,
-            });
-            /* element.castShadow = true;
-          element.receiveShadow = false; */
+            if (element instanceof THREE.Mesh) {
+              if (ClientSVG3D.DEBUG)
+                console.log("MOUSE OVER Element = ", element.material.color);
+              if (ClientSVG3D.DEBUG)
+                console.log(
+                  "MOUSE OVER Element ClientSVG3D.unactiveColor = ",
+                  ClientSVG3D.unactiveColor
+                );
+              if (element instanceof THREE.Mesh) {
+                element.material.color = new THREE.Color(
+                  ClientSVG3D.unactiveColor
+                );
+              }
+            }
             element.scale.z = 1;
             //intersects[0].object.position.z = 0;
           });
@@ -2042,9 +2050,9 @@ export class ClientSVG3D extends Base {
                ClientSVG3D.INTERSECTED.material.color =
           ClientSVG3D.INTERSECTED.currentHex; */
         ClientSVG3D.defaultColorActive();
-        /*       const groupActive = ClientSVG3D.scene?.getObjectByName("active");
-      console.log("MOUSE OUT ", groupActive?.children);
-      console.log("ClientSVG3D.unactiveColor ", ClientSVG3D.unactiveColor);
+        /*const groupActive = ClientSVG3D.scene?.getObjectByName("active");
+      if (ClientSVG3D.DEBUG) console.log("MOUSE OUT ", groupActive?.children);
+      if (ClientSVG3D.DEBUG) console.log("ClientSVG3D.unactiveColor ", ClientSVG3D.unactiveColor);
       groupActive?.children.forEach((element) => {
         (element as THREE.Mesh).material = new THREE.MeshPhongMaterial({
           color: ClientSVG3D.unactiveColor,
@@ -2063,25 +2071,36 @@ export class ClientSVG3D extends Base {
       }
     }
   }
+
+  static _someeventHandler(e: any) {
+    console.log("some event happened");
+    return e;
+    //throw new Error("Method not implemented.");
+  }
   setDefaultColor = () => {
     ClientSVG3D.defaultColorActive();
   };
 
   static defaultColorActive() {
     const groupActive = ClientSVG3D.scene?.getObjectByName("active");
-    //console.log("defaultColorActive ", groupActive?.children);
-    console.log("ClientSVG3D.unactiveColor ", ClientSVG3D.unactiveColor);
+    //if (ClientSVG3D.DEBUG) console.log("defaultColorActive ", groupActive?.children);
+    if (ClientSVG3D.DEBUG)
+      console.log("ClientSVG3D.unactiveColor ", ClientSVG3D.unactiveColor);
     groupActive?.children.forEach((element) => {
-      (element as THREE.Mesh).material = new THREE.MeshPhongMaterial({
+      if (element instanceof THREE.Mesh) {
+        element.material.color = new THREE.Color(ClientSVG3D.unactiveColor);
+      }
+      /* (element as THREE.Mesh).material = new THREE.MeshPhongMaterial({
         color: ClientSVG3D.unactiveColor,
-        /*           specular: 0x111111,
-        emissive: 0x111111,
-        shininess: 30, */
+        //specular: 0x111111,
+        //emissive: 0x111111,
+        //shininess: 30,
         opacity: 1.0,
         transparent: true,
         wireframe: false,
         side: THREE.DoubleSide,
-      });
+        //depthWrite: false,
+      }); */
 
       element.scale.z = 1;
     });
@@ -2105,7 +2124,8 @@ export class ClientSVG3D extends Base {
     }
 
     const texture = new THREE.VideoTexture(video);
-    texture.colorSpace = THREE.SRGBColorSpace;
+    if (ClientSVG3D.DEBUG) console.log("Video texture = ", texture);
+    //texture.colorSpace = THREE.SRGBColorSpace;
     const parameters = { color: 0xffffff, map: texture };
     const materialV = new THREE.MeshLambertMaterial(parameters);
     materialV.opacity = 1.0;
@@ -2201,9 +2221,11 @@ export class ClientSVG3D extends Base {
       keepAlive: false,
     };
     groupActive?.children.forEach((element) => {
-      (element as THREE.Mesh).material = materialClear;
-
-      element.scale.z = 1.0;
+      if (element instanceof THREE.Mesh) {
+        element.material.color = new THREE.Color(ClientSVG3D.unactiveColor);
+        element.scale.z = 1.0;
+        if (ClientSVG3D.DEBUG) console.log("mesh => ", element);
+      }
     });
     //#ClientSVG3D.render();
   }
@@ -2220,7 +2242,7 @@ export class ClientSVG3D extends Base {
     this.node.innerHTML = "";
 
     const getSVGData = await loadSVGFile(urlSVG);
-    // console.log("getSVGData = ", getSVGData);
+    // if (ClientSVG3D.DEBUG) console.log("getSVGData = ", getSVGData);
   }
   disposeTHREE() {
     this.clearThree(ClientSVG3D.scene);
@@ -2237,7 +2259,7 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.renderPass = null; */
     ClientSVG3D.outlinePass = null;
     ClientSVG3D.scene = new THREE.Scene();
-    console.log("disposeTHREE = ", ClientSVG3D.scene);
+    if (ClientSVG3D.DEBUG) console.log("disposeTHREE = ", ClientSVG3D.scene);
   }
   clearThree(obj: any) {
     while (obj.children.length > 0) {
@@ -2273,7 +2295,7 @@ export class ClientSVG3D extends Base {
 
   /*   render() {
     ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
-    console.log("render");
+    if (ClientSVG3D.DEBUG) console.log("render");
   } */
   animate(loop = false) {
     //if (ClientSVG3D.DEBUG) console.log("animate");
@@ -2293,23 +2315,22 @@ export class ClientSVG3D extends Base {
       updateAnimation();
     }
   }
-  addObjectToAnimate(
-    namePath: string,
-    object: THREE.Object3D,
-    path: THREE.Path | THREE.CatmullRomCurve3,
-    t: number,
-    duration: number
-  ) {
+  addObjectToAnimate(options: AnimationOptions) {
     // Добавление объекта в массив анимируемых объектов
     ClientSVG3D.arrayPathsAnimation.push({
-      namePath: namePath,
-      object: object,
-      path: path,
-      t: t,
-      duration: duration,
+      isOpacityAnimation: options.isOpacityAnimation ?? false,
+      isPathAnimation: options.isPathAnimation ?? false,
+      namePath: options.namePath,
+      object: options.object,
+      path: options.path,
+      t: options.t ?? 0,
+      tt: options.tt ?? 0,
+      duration: options.duration ?? 60,
+      opacitySteps: options.opacitySteps ?? { timeStart: 0, timeEnd: 0 },
     });
-    console.log("Object TYPE  = ", object);
-    console.log("Object TYPE  = ", typeof object);
+    if (ClientSVG3D.DEBUG) console.log("Object TYPE  = ", options.object);
+    if (ClientSVG3D.DEBUG)
+      console.log("Object TYPE  = ", typeof options.object);
     const material = new THREE.MeshStandardMaterial({
       color: 0x99ffff,
     });
@@ -2352,7 +2373,6 @@ export class ClientSVG3D extends Base {
     }
     if (arrayPoints[0] instanceof THREE.Vector3) {
       path = new THREE.CatmullRomCurve3(arrayPoints as THREE.Vector3[]);
-      path.closed = true;
       // Создание объекта для отображения пути
       const points = path.getPoints(50);
       const pathGeometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -2369,6 +2389,21 @@ export class ClientSVG3D extends Base {
     // Очистка массива анимируемых объектов
     ClientSVG3D.arrayPathsAnimation = [];
   }
+  static doSomething() {
+    console.log("Doing something...");
+    this.eventEmitter.emit("somethingHappened", "Some data");
+  }
+  static subscribeToEvent() {
+    this.eventEmitter.on("somethingHappened", (data: string) => {
+      console.log("Received data:", data);
+    });
+  }
+  get onsomeevent() {
+    return ClientSVG3D._someeventHandler;
+  }
+  set onsomeevent(newVal) {
+    ClientSVG3D._someeventHandler = newVal;
+  }
 }
 
 // create function load text file from url
@@ -2378,11 +2413,11 @@ const loadSVGFile = async (url: string) => {
   const data = fetch(url)
     .then((response) => response.text())
     .then((text) => {
-      //  console.log('text = ', text)
+      //  if (ClientSVG3D.DEBUG) console.log('text = ', text)
       return text;
     })
     .catch((error) => {
-      //  console.log('error = ', error)
+      //  if (ClientSVG3D.DEBUG) console.log('error = ', error)
       return error;
     });
   return data;
@@ -2404,74 +2439,97 @@ function updateAnimation() {
   ClientSVG3D.arrayPathsAnimation.forEach((item) => {
     //updateObjectPosition(item.object, item.path);
     if (item.object === undefined) return;
-    const position = ClientSVG3D.calculatePosition(
-      item.path!,
-      item.t!,
-      item.duration!
-    );
-    // Установка позиции объекта
-    item.object!.position.x = position.x;
-    item.object!.position.y = position.y;
-    if (item.path instanceof THREE.CatmullRomCurve3) {
-      item.object!.position.z = position.z;
-    }
-    // Увеличение времени анимации
-    item.t! += 1 / 60; // 60 кадров в секунду
-    if (item.t! > item.duration!) {
-      item.t! = 0;
-    }
-    let tangent;
-    let angle;
-    if (item.path instanceof THREE.CatmullRomCurve3) {
-      tangent = calculateTangent(
+    if (item.isPathAnimation) {
+      const position = ClientSVG3D.calculatePosition(
         item.path!,
         item.t!,
         item.duration!
-      ) as THREE.Vector3;
+      );
+      // Установка позиции объекта
+      item.object!.position.x = position.x;
+      item.object!.position.y = position.y;
+      if (item.path instanceof THREE.CatmullRomCurve3) {
+        if (position instanceof THREE.Vector3) {
+          item.object!.position.z = position.z;
+        }
+      }
+      // Увеличение времени анимации
+      item.t! += 1 / 60; // 60 кадров в секунду
+      if (item.t! > item.duration!) {
+        item.t! = 0;
+      }
+      let tangent;
+      let angle;
+      if (item.path instanceof THREE.CatmullRomCurve3) {
+        tangent = calculateTangent(
+          item.path!,
+          item.t!,
+          item.duration!
+        ) as THREE.Vector3;
 
-      // Вычисление угла поворота объекта
-      angle = Math.atan2(tangent.y, tangent.x);
-      item.object!.rotation.z = angle;
-      //console.log("angle = ", angle);
+        // Вычисление угла поворота объекта
+        angle = Math.atan2(tangent.y, tangent.x);
+        item.object!.rotation.z = angle;
+        //if (ClientSVG3D.DEBUG) console.log("angle = ", angle);
+      }
+      if (item.path instanceof THREE.Path) {
+        tangent = calculateTangent(
+          item.path!,
+          item.t!,
+          item.duration!
+        ) as THREE.Vector2;
+
+        // Вычисление угла поворота объекта
+        angle = Math.atan2(tangent.y, tangent.x);
+        item.object!.rotation.z = angle;
+      }
     }
-    if (item.path instanceof THREE.Path) {
-      tangent = calculateTangent(
-        item.path!,
-        item.t!,
-        item.duration!
-      ) as THREE.Vector2;
+    if (item.isOpacityAnimation && item.object instanceof THREE.Mesh) {
+      // Увеличение времени анимации
+      item.t! += 1 / 60; // 60 кадров в секунду
+      if (item.t! > item.duration!) {
+        item.t! = 0;
+        item.tt = 0;
+      }
+      // Вычисление значения прозрачности в зависимости от времени
+      let opacity;
+      if (item.t! < item.duration! / 2) {
+        item.tt! += 1 / 60;
+        opacity = item.tt! / item.opacitySteps!.timeStart;
+        /* if (ClientSVG3D.DEBUG) console.log(
+          "First Half Time item.duration! = ",
+          item.duration!,
+          " T = ",
+          item.t!,
+          " tt = ",
+          item.tt
+        ); */
+      } else {
+        item.tt! -= 1 / 60;
+        opacity = item.tt! / item.opacitySteps!.timeEnd;
+        /* if (ClientSVG3D.DEBUG) console.log(
+          "Second Half Time item.duration! = ",
+          item.duration!,
+          " T = ",
+          item.t!,
+          " tt = ",
+          item.tt
+        ); */
+      }
 
-      // Вычисление угла поворота объекта
-      angle = Math.atan2(tangent.y, tangent.x);
-      item.object!.rotation.z = angle;
+      // Установка значения прозрачности материала объектов
+
+      //if (ClientSVG3D.DEBUG) console.log("opacity calc= ", opacity);
+      //if (ClientSVG3D.DEBUG) console.log("t calc= ", item.t!);
+      item.object!.material.opacity = opacity;
     }
-    // Вычисление касательного вектора к пути
-
     // Перезапуск анимации после завершения
-    if (item.t! > item.duration! + (2 * item.duration!) / 3) {
+    if (item.t! > item.duration! + 2 * item.duration!) {
       item.t = 0;
     }
     //if (ClientSVG3D.DEBUG) console.log("updateAnimation TIME  = ", item.t);
   });
-
-  // Обновление анимации прозрачности материала
-  //updateOpacityAnimation();
 }
-/* function updateOpacityAnimation() {
-  // Вычисление значения прозрачности в зависимости от времени
-  var opacity;
-
-  if (t < duration) {
-    opacity = 1 - t / duration; // Уменьшение прозрачности от 1 до 0
-  } else {
-    opacity = (t - duration) / ((2 * duration) / 3); // Увеличение прозрачности от 0 до 1
-  }
-
-  // Установка значения прозрачности материала объектов
-  cube.material.opacity = opacity;
-  sphere.material.opacity = opacity;
-} */
-
 // write function chek  mobile device
 
 const isMobile = () => {

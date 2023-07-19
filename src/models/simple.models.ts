@@ -382,13 +382,21 @@ export interface BoxSideTextures {
   left?: string;
   right?: string;
 }
-export interface PathOptions {
+export interface AnimationOptions {
+  isPathAnimation?: boolean;
+  isOpacityAnimation?: boolean;
   namePath?: string;
   path?: THREE.Path | THREE.CatmullRomCurve3;
   object?: THREE.Object3D | THREE.Group | THREE.Mesh;
   t?: number;
+  tt?: number;
   duration?: number;
+  opacitySteps?: OpacityStep;
 }
+export type OpacityStep = {
+  timeStart: number;
+  timeEnd: number;
+};
 export interface OptionsSpotLight {
   name?: string;
   color?: THREE.ColorRepresentation | undefined;

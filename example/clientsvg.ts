@@ -48,7 +48,10 @@ export async function testmylib(): Promise<boolean> {
       },
       baloonTheme
     );
-
+    map1.onsomeevent = (e): void => {
+      //console.log("handler running");
+      console.log("handler running", e);
+    };
     const btnshclear = document.getElementById("clear");
     const btnsh1 = document.getElementById("viewShop1");
     const btnsh2 = document.getElementById("viewShop2");
@@ -212,7 +215,7 @@ export async function testmylib(): Promise<boolean> {
       console.log("selectShop element = ", dataelement);
       //const geturl = dataelement.getAttribute('data-url')
 
-      map1.selectItem(dataelement);
+      map1.selectItem(dataelement, true);
     }
     function selectObject(idObject: string[]): void {
       console.log("selectObject element = ", idObject);
@@ -297,27 +300,18 @@ export async function testmylib(): Promise<boolean> {
 
           const boxSign = map1.addBox({
             nameBox: "sign-1",
-            width: 1,
-            height: 100,
-            depth: 100,
-            position: new THREE.Vector3(420, 1200, 260),
+            width: 10,
+            height: 10,
+            depth: 30,
+            position: new THREE.Vector3(880, 450, 60),
             rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
-            materialsSide: {
-              front: "./public/i-atm.png",
-              back: "",
-              left: "",
-              right: "",
-              up: "",
-              down: "",
-            },
             material: new THREE.MeshPhongMaterial({
-              color: 0x998888,
-              specular: 0x666666,
-              emissive: 0x777777,
-              shininess: 6,
-              opacity: 0.8,
+              color: 0xff2233,
+              //specular: 0x666666,
+              //emissive: 0x777777,
+              //shininess: 6,
+              opacity: 0.0,
               transparent: true,
-              wireframe: false,
             }),
             shadow: {
               castShadow: false,
@@ -334,6 +328,18 @@ export async function testmylib(): Promise<boolean> {
             //isAnimation: true,
           });
           console.log("loadObjAnim =>> ", loadObjAnim); */
+
+          /* const loadObjAnim1 = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/flamingo.glb",
+            nameObject: "Flamingo",
+            //color: 0x850000,
+            //urlMTL: "./public/3dobj/car-2.mtl",
+            durationAnimation: 2,
+            rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
+            scale: new THREE.Vector3(0.4, 0.4, 0.4),
+            position: new THREE.Vector3(1300, 830, 200),
+            //isAnimation: true,
+          }); */
           const liftf1 = await map1.addGLB2({
             urlOBJ: "./public/3dobj/lift-bl2.glb",
             nameObject: "lift-1",
@@ -345,19 +351,8 @@ export async function testmylib(): Promise<boolean> {
             position: new THREE.Vector3(1500, 830, 10),
             //isAnimation: true,
           });
-          const loadObjAnim1 = await map1.addGLB2({
-            urlOBJ: "./public/3dobj/flamingo.glb",
-            nameObject: "Flamingo",
-            //color: 0x850000,
-            //urlMTL: "./public/3dobj/car-2.mtl",
-            durationAnimation: 2,
-            rotation: new THREE.Vector3(Math.PI / 2, 0, 0),
-            scale: new THREE.Vector3(0.4, 0.4, 0.4),
-            position: new THREE.Vector3(1300, 830, 200),
-            //isAnimation: true,
-          });
 
-          const getObj = map1.findObjectByName("Flamingo");
+          //const getObj = map1.findObjectByName("Flamingo");
 
           map1.addClone({
             meshSource: liftf1,
@@ -386,7 +381,48 @@ export async function testmylib(): Promise<boolean> {
             position: new THREE.Vector3(2055, 535, 10),
             rotation: new THREE.Vector3(Math.PI / 2, -Math.PI / 3.3, 0),
           });
-
+          const LiftShahta1 = map1.addBox({
+            nameBox: "signOp-1",
+            width: 25,
+            height: 25,
+            depth: 300,
+            position: new THREE.Vector3(1970, 450, 60),
+            rotation: new THREE.Vector3(0, Math.PI / 1, degToRad(50)),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x33dddd,
+              specular: 0x666666,
+              //emissive: 0x777777,
+              shininess: 6,
+              opacity: 0.2,
+              transparent: true,
+              depthWrite: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          });
+          const LiftShahta2 = map1.addBox({
+            nameBox: "signOp-1",
+            width: 25,
+            height: 25,
+            depth: 300,
+            position: new THREE.Vector3(2055, 535, 60),
+            rotation: new THREE.Vector3(0, Math.PI / 1, degToRad(50)),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x33dddd,
+              specular: 0x666666,
+              //emissive: 0x777777,
+              shininess: 6,
+              opacity: 0.2,
+              transparent: true,
+              depthWrite: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: false,
+            },
+          });
           const treeObj1f = await map1.addObject({
             nameObject: "tree-01",
             urlOBJ: "./public/3dobj/tree-1.obj",
@@ -569,27 +605,59 @@ export async function testmylib(): Promise<boolean> {
             0,
             40
           ); */
-          map1.addObjectToAnimate(
-            "carmovie3",
-            boxMesh,
-            map1.createPath(pathM4),
-            0,
-            20
-          );
+          map1.addObjectToAnimate({
+            isPathAnimation: true,
+            namePath: "carmovie",
+            object: boxMesh,
+            path: map1.createPath(pathM4),
+            t: 0,
+            //tt: 0,
+            duration: 5,
+            /* opacitySteps: {
+              timeStart: 0.5,
+              timeEnd: 0.5,
+            }, */
+          });
+          map1.addObjectToAnimate({
+            isOpacityAnimation: true,
+            namePath: "carmovie2",
+            object: boxSign,
+            t: 0,
+            tt: 0,
+            duration: 3,
+            opacitySteps: {
+              timeStart: 0.5,
+              timeEnd: 0.5,
+            },
+          });
+
           map1.addClone({
             meshSource: car1,
             name: "car-02",
             position: new THREE.Vector3(1600, 230, 0),
           });
           const video = document.getElementById("video");
-          const videoBox = map1.addBoxVideoTextire(video as HTMLVideoElement, {
+          const video2 = document.getElementById("video2");
+          /* const videoBoxGround = map1.addBoxVideoTextire(
+            video2 as HTMLVideoElement,
+            {
+              nameBox: "box-VIDEO-ground",
+              width: 2600,
+              height: 1200,
+              depth: 2,
+              position: new THREE.Vector3(1300, 675, 0),
+              rotation: new THREE.Vector3(0, 0, 0),
+            }
+          ); */
+          /* const videoBox = map1.addBoxVideoTextire(video as HTMLVideoElement, {
             nameBox: "box-VIDEO-2",
             width: 500,
             height: 50,
             depth: 2,
             position: new THREE.Vector3(500, 30, 0),
             rotation: new THREE.Vector3(0, 0, 0),
-          });
+          }); 
+          
           map1.addClone({
             meshSource: videoBox,
             name: "box-VIDEO-3",
@@ -616,7 +684,7 @@ export async function testmylib(): Promise<boolean> {
             position: new THREE.Vector3(930, 250, -1),
             rotation: new THREE.Vector3(degToRad(0), degToRad(0), degToRad(60)),
           });
-
+*/
           console.log("SELECT MAP 1 =>> ", map1);
           break;
         case "floor-2":
@@ -788,6 +856,7 @@ export async function testmylib(): Promise<boolean> {
             //shininess: 6,
             transparent: false,
             wireframe: false,
+            depthWrite: false,
           }), */
           shadow: {
             castShadow: true,
@@ -931,17 +1000,18 @@ export async function testmylib(): Promise<boolean> {
         bevelEnabled: false,
       },
       material: new THREE.MeshPhongMaterial({
-        color: 0x212122,
+        color: 0x989899,
         specular: 0x222222,
-        emissive: 0x777777,
+        //emissive: 0x777777,
         shininess: 6,
         opacity: 1.0,
-        transparent: true,
+        transparent: false,
         wireframe: false,
+        //depthWrite: false,
       }),
       shadow: {
         castShadow: true,
-        receiveShadow: true,
+        receiveShadow: false,
       },
     });
   }
@@ -981,12 +1051,13 @@ export async function testmylib(): Promise<boolean> {
       material: new THREE.MeshPhongMaterial({
         color: 0x115281,
         specular: 0x666666,
-        emissive: 0x777777,
+        //emissive: 0x777777,
         shininess: 1,
         opacity: 0.2,
         transparent: true,
         wireframe: false,
         side: THREE.DoubleSide,
+        //depthWrite: false,
       }),
       shadow: {
         castShadow: false,
