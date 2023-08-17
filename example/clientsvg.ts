@@ -14,6 +14,13 @@ import { radToDeg } from "three/src/math/MathUtils";
 export async function testmylib(): Promise<boolean> {
   console.log("testmylib");
   const nodeMap = document.getElementById("map3d");
+  const nodeMap2 = document.getElementById("map3d2");
+  const baloon = document.getElementById("baloon");
+  let baloonTitle;
+  if (baloon instanceof HTMLElement) {
+    baloonTitle = baloon.querySelector(".baloon__title");
+  }
+  let arrayOldViewObject: string[] = [];
   const activeColorShop = 0xaa6666; // Color for active item
   const unactiveColorShop = 0x898888; // Color for active item
   const baloonTheme = {
@@ -24,6 +31,136 @@ export async function testmylib(): Promise<boolean> {
     top: 0,
     left: 0,
   };
+  if (nodeMap2) {
+    const map2: ClientSVG3D = new ClientSVG3D(
+      nodeMap2, // node - dom element to insert svg
+      dataShops2, // dataItems - data to render
+      {
+        isDebug: true, // isDebug - debug mode
+        isHoverEnable: true, // isDebug - debug mode
+        title: "Пример карты", // Head Title this map
+        signsLayer: "#signsLayer", // Layer name for signs
+        objectsLayer: "#objectsL", // Layer name for objects
+        activeColor: activeColorShop, // Color for active item
+        unactiveColor: unactiveColorShop, // Color for active item
+        interactiveLayer: "shops", // Layer name for interactive
+        urlmap: "./public/grand-floor-1-final.svg", // Path to map svg
+        isRemoveUnuseItem: false, // Remove unuse item from map?
+        funcParams: "https://www.google.com", // Params for function click on item
+        paramsMap: {
+          positions: new THREE.Vector3(-700, -220, 2),
+          rotations: new THREE.Vector3(0, 0, 0),
+          scales: new THREE.Vector3(0.5, 0.5, 0.5),
+        },
+      },
+      baloonTheme
+    );
+    const paramCam2: OptionsCam = {};
+    const targetCam2 = new THREE.Vector3(500, 0, 0);
+    paramCam2.fov = 55;
+    paramCam2.aspect = nodeMap2.offsetWidth / nodeMap2.offsetHeight;
+    //paramCam.near = 1;
+    paramCam2.far = 20000;
+    paramCam2.zoom = 1.0;
+    paramCam2.position?.set(3000, 0, 0);
+    let paramAmbientLight: OptionsAmbientLight | undefined;
+    let paramSpotLight: OptionsSpotLight | undefined;
+    let paramPlane: OptionsPlane | undefined;
+
+    //await startClient2();
+    async function startClient2() {
+      console.log("START MAP =>> ", map2);
+      //nodeMap!.innerHTML = "";
+      map2.options.urlmap = "./public/grand-floor-1-final.svg";
+      map2.options.paramsMap = {
+        positions: new THREE.Vector3(0, 0, 5),
+        rotations: new THREE.Vector3(0, 0, 0),
+        scales: new THREE.Vector3(0.5, 0.5, 1.0),
+      };
+      const startS = await map2.runLoadSVG();
+      /* const startS = await map1.start();*/
+      const initS = await map2.init();
+      const initAnim = await map2.startAnimation();
+
+      console.log("START MAP startS =>> ", startS);
+      console.log("START MAP initS =>> ", initS);
+      console.log("START MAP initAnim =>> ", initAnim);
+
+      map2.addCamera(paramCam2);
+      map2.addAmbientLight(paramAmbientLight);
+      map2.addSpotLight(paramSpotLight);
+      map2.addPlane(paramPlane);
+      addTexts(map2);
+      map2.addControlsNew({
+        isZoom: true,
+        isPan: true,
+        isRotate: true,
+        minDistance: 300,
+        maxDistance: 1600,
+        maxOrbitPanX: 400,
+        maxOrbitPanY: 300,
+        minOrbitPanX: -400,
+        minOrbitPanY: -300,
+        maxPolarAngle: Math.PI / 1.4,
+        target: targetCam2,
+        isUnmountEvent: false,
+        minPolarAngle: 0
+      });
+      const objAtm = map2.addBox({
+        nameBox: "sign-2",
+        //urlSignImage: "./public/i-atm.png",
+        width: 2000,
+        height: 4300,
+        depth: 0,
+        position: new THREE.Vector3(1300, 600, 0),
+        rotation: new THREE.Vector3(0, Math.PI / 1, 0),
+        scale: new THREE.Vector3(100.0, 100.0, 100.0),
+        material: new THREE.MeshPhongMaterial({
+          color: 0x999999,
+          specular: 0x666666,
+          emissive: 0x000000,
+          shininess: 6,
+          opacity: 0.4,
+          transparent: true,
+          wireframe: false,
+        }),
+        shadow: {
+          castShadow: false,
+          receiveShadow: true,
+        },
+      });
+      map2.setImageTexture(
+        "./public/textures/grand-map-2.png",
+        "./public/textures/alpha_texture.jpg",
+        objAtm
+      );
+      const loadActive = await map2.addSVGExtrudeObject(
+        {
+          groupObjects: new THREE.Group(),
+          settingsGroup: {
+            nameGroup: "active",
+            positions: new THREE.Vector3(
+              -700,
+              -220,
+              map2.options.paramsMap?.positions?.z
+            ),
+            scales: new THREE.Vector3(0.5, 0.5, 0.5),
+          },
+          nameLayerSVG: "shops",
+          settingsExtrude: {
+            depth: 6,
+            bevelEnabled: false,
+          },
+          shadow: {
+            castShadow: true,
+            receiveShadow: false,
+          },
+        },
+        []
+      );
+    }
+
+  }
   if (nodeMap) {
     const map1: ClientSVG3D = new ClientSVG3D(
       nodeMap, // node - dom element to insert svg
@@ -48,14 +185,49 @@ export async function testmylib(): Promise<boolean> {
       },
       baloonTheme
     );
-    map1.onsomeevent = (e): void => {
+    map1.onselectitem = (e): void => {
       //console.log("handler running");
       console.log("handler running", e);
+      baloonTitle.innerHTML = e;
     };
+    map1.onshowballoon = (e): void => {
+      //console.log("handler running");
+      //console.log("onshowballoon = ", e);
+      if (e) {
+        baloon?.classList.remove("hide");
+      } else {
+        baloon?.classList.add("hide");
+      }
+    };
+    nodeMap.addEventListener("mousemove", (e) => {
+      //console.log("handler running");
+      /* console.log("handler running", e);
+      console.log("baloon", baloon?.offsetHeight); */
+      //MouseEvent;
+      getMouseCursor(e);
+      if (baloon instanceof HTMLElement) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        //baloon!.style.transform = `translate(${e.pageX}px, ${e.pageY}px)`;
+        setTimeout(() => {
+          baloon.style.left = `${e.pageX + 12}px`;
+          baloon.style.top = `${e.pageY - baloon?.offsetHeight - 14}px`;
+        }, 20);
+      }
+    });
+    /* nodeMap.addEventListener("mouseover", () => {
+      console.log("SHOW BALLOON");
+      baloon?.classList.remove("hide");
+    });
+    nodeMap.addEventListener("mouseout", () => {
+      console.log("HIDE BALLOON");
+      baloon?.classList.add("hide");
+    }); */
     const btnshclear = document.getElementById("clear");
     const btnsh1 = document.getElementById("viewShop1");
     const btnsh2 = document.getElementById("viewShop2");
     const btnsh3 = document.getElementById("viewShop3");
+    const btnsign1 = document.getElementById("viewSign1");
+    const btnsigns2 = document.getElementById("viewSigns2");
     const btnMap1 = document.getElementById("getMap1");
     const btnMap2 = document.getElementById("getMap2");
     const btnMap3 = document.getElementById("getMap3");
@@ -65,16 +237,27 @@ export async function testmylib(): Promise<boolean> {
     const btnSelect2 = document.getElementById("selectObj2");
     const btnClearSelect = document.getElementById("clearSelection");
     btnshclear?.addEventListener("click", () => {
-      clearScene();
+      clearSceneOnly();
     });
     btnsh1?.addEventListener("click", () => {
+      viewSign([], true);
       selectShop("Shape-2-50");
     });
     btnsh2?.addEventListener("click", () => {
+      viewSign([], true);
       selectShop("Shape-2-01");
     });
     btnsh3?.addEventListener("click", () => {
+      viewSign([], true);
       selectShop("Shape-2-11");
+    });
+    btnsign1?.addEventListener("click", () => {
+      clearSelectShop(map1);
+      viewSign(["sign-point", "sign-point-2"], true);
+    });
+    btnsigns2?.addEventListener("click", () => {
+      clearSelectShop(map1);
+      viewSign(["sign-point-3"], true);
     });
     btnMap1?.addEventListener("click", () => {
       clearActiveFloor();
@@ -144,7 +327,7 @@ export async function testmylib(): Promise<boolean> {
       const startS = await map1.runLoadSVG();
       /* const startS = await map1.start();*/
       const initS = await map1.init();
-      const initAnim = await map1.animate(true);
+      const initAnim = await map1.startAnimation();
 
       console.log("START MAP startS =>> ", startS);
       console.log("START MAP initS =>> ", initS);
@@ -167,6 +350,7 @@ export async function testmylib(): Promise<boolean> {
         minOrbitPanY: -300,
         maxPolarAngle: Math.PI / 1.4,
         target: targetCam,
+        isUnmountEvent: false,
       });
 
       selectMap("floor-1");
@@ -179,6 +363,11 @@ export async function testmylib(): Promise<boolean> {
     groupTree.position.z = 0;
     selectMap("floor-1");
     console.log("START MAP =>> ", map1); */
+    function clearSceneOnly(): void {
+      if(nodeMap === null) return;
+      nodeMap.innerHTML = "";
+      map1.disposeTHREE();
+    }
     function clearScene(): void {
       nodeMap!.innerHTML = "";
       map1.disposeTHREE();
@@ -204,10 +393,15 @@ export async function testmylib(): Promise<boolean> {
         isZoom: true,
         isPan: true,
         isRotate: false,
-        minDistance: 900,
-        maxDistance: 3000,
+        minDistance: 300,
+        maxDistance: 1600,
+        maxOrbitPanX: 400,
+        maxOrbitPanY: 300,
+        minOrbitPanX: -400,
+        minOrbitPanY: -300,
         maxPolarAngle: Math.PI / 1.4,
         target: targetCam,
+        isUnmountEvent: true,
       });
       selectMap("floor-1");
     }
@@ -225,6 +419,12 @@ export async function testmylib(): Promise<boolean> {
         map1.options?.signsLayer?.substring(1) as string,
         false
       );
+    }
+    function viewSign(idObjects: string[], isVisible: boolean): void {
+      console.log("selectObject element = ", idObjects);
+      map1.visibleObjects(arrayOldViewObject, false);
+      map1.visibleObjects(idObjects, isVisible);
+      arrayOldViewObject = idObjects;
     }
     async function selectMap(
       floorMap: any,
@@ -273,51 +473,35 @@ export async function testmylib(): Promise<boolean> {
               receiveShadow: false,
             },
           }); */
-          const objAtm = map1.addSign({
-            nameSign: "sign-2",
-            urlSignImage: "./public/i-atm.png",
-            width: 10,
-            height: 100,
-            depth: 100,
-            position: new THREE.Vector3(650, 1200, 260),
-            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
+          const objAtm = map1.addBox({
+            nameBox: "sign-2",
+            //urlSignImage: "./public/i-atm.png",
+            width: 2000,
+            height: 4300,
+            depth: 0,
+            position: new THREE.Vector3(1300, 600, 0),
+            rotation: new THREE.Vector3(0, Math.PI / 1, 0),
             scale: new THREE.Vector3(100.0, 100.0, 100.0),
             material: new THREE.MeshPhongMaterial({
-              color: 0xffffff,
+              color: 0x999999,
               specular: 0x666666,
               emissive: 0x000000,
               shininess: 6,
-              opacity: 0.8,
+              opacity: 0.4,
               transparent: true,
               wireframe: false,
             }),
             shadow: {
               castShadow: false,
-              receiveShadow: false,
+              receiveShadow: true,
             },
           });
+          map1.setImageTexture(
+            "./public/textures/grand-map-2.png",
+            "./public/textures/alpha_texture.jpg",
+            objAtm
+          );
           console.log("objAtm =>> ", objAtm);
-
-          const boxSign = map1.addBox({
-            nameBox: "sign-1",
-            width: 10,
-            height: 10,
-            depth: 30,
-            position: new THREE.Vector3(880, 450, 60),
-            rotation: new THREE.Vector3(0, Math.PI / 1, Math.PI / 1),
-            material: new THREE.MeshPhongMaterial({
-              color: 0xff2233,
-              //specular: 0x666666,
-              //emissive: 0x777777,
-              //shininess: 6,
-              opacity: 0.0,
-              transparent: true,
-            }),
-            shadow: {
-              castShadow: false,
-              receiveShadow: false,
-            },
-          });
           /*const loadObjAnim = await map1.addFBX({
             urlOBJ: "./public/3dobj/lift.fbx",
             //color: 0x850000,
@@ -340,6 +524,37 @@ export async function testmylib(): Promise<boolean> {
             position: new THREE.Vector3(1300, 830, 200),
             //isAnimation: true,
           }); */
+          const findWC1 = map1.getPositionSVGObject("wc-1-1");
+
+          console.log("START MAP startS findElement =>> ", findWC1);
+          const signPoint = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/signPoint.glb",
+            nameObject: "sign-point",
+            rotation: new THREE.Vector3(degToRad(90), degToRad(0), degToRad(0)),
+            scale: new THREE.Vector3(10, 10, 10),
+            position: new THREE.Vector3(findWC1?.x, findWC1?.y, 6),
+            isVisible: false,
+          });
+
+          map1.setMaterialsParams(signPoint, {
+            color: 0x9823ab,
+            opacity: 0.5,
+            transparent: true,
+          });
+          const findWC2 = map1.getPositionSVGObject("wc-1-2");
+          const signPoint2 = map1.addClone({
+            meshSource: signPoint,
+            name: "sign-point-2",
+            duration: 6,
+            //position: new THREE.Vector3(880, 430, 10),
+            position: new THREE.Vector3(findWC2?.x, findWC2?.y, 10),
+          });
+          const signPoint3 = map1.addClone({
+            meshSource: signPoint,
+            name: "sign-point-3",
+            duration: 6,
+            position: new THREE.Vector3(1720, 770, 10),
+          });
           const liftf1 = await map1.addGLB2({
             urlOBJ: "./public/3dobj/lift-bl2.glb",
             nameObject: "lift-1",
@@ -445,68 +660,6 @@ export async function testmylib(): Promise<boolean> {
 
           const objLine = new THREE.Group();
           objLine.name = "line-4511";
-          /*       map.addPolyline({
-            points: path, // points
-            isDash: false, 
-            color: 0x000000, // color
-            shadow: {
-              castShadow: true,
-              receiveShadow: false,
-            },
-          }); */
-          /*map1.addTubePath({
-            nameGroupInsert: "signsLayer",
-            nameLine: "line rt-0",
-            points: [
-              new THREE.Vector3(1040, 980, 50),
-              new THREE.Vector3(1040, 920, 50),
-              new THREE.Vector3(1300, 920, 100),
-              new THREE.Vector3(1300, 280, 100),
-            ], // points
-            material: new THREE.MeshPhongMaterial({
-              color: 0x990000,
-              specular: 0x000000,
-              emissive: 0x990000,
-              shininess: 2,
-              opacity: 0.9,
-              transparent: true,
-              wireframe: false,
-            }),
-            radius: 2,
-            curveType: "catmullrom", //Possible values are centripetal, chordal and catmullrom.
-            curveTension: 0.0, //Used only for catmullrom curveType.
-            shadow: {
-              castShadow: true,
-              receiveShadow: false,
-            },
-          });
-           map1.addTubePath({
-            nameGroupInsert: "signsLayer3",
-            nameLine: "line rt-1",
-            points: [
-              new THREE.Vector3(2040, 980, 120),
-              new THREE.Vector3(2040, 920, 120),
-              new THREE.Vector3(2300, 920, 120),
-              new THREE.Vector3(2300, 980, 120),
-            ], // points
-            material: new THREE.MeshPhongMaterial({
-              color: 0x990000,
-              specular: 0x000000,
-              emissive: 0x990000,
-              shininess: 2,
-              opacity: 0.9,
-              transparent: true,
-              wireframe: false,
-            }),
-            radius: 2,
-            curveType: "catmullrom", //Possible values are centripetal, chordal and catmullrom.
-            curveTension: 0.0, //Used only for catmullrom curveType.
-            shadow: {
-              castShadow: true,
-              receiveShadow: false,
-            },
-          }); */
-
           const cafe1 = await map1.addObject({
             nameObject: "cafe-01",
             urlOBJ: "./public/3dobj/obj/cafe.obj",
@@ -534,23 +687,15 @@ export async function testmylib(): Promise<boolean> {
               degToRad(30),
               degToRad(0)
             ),
-            scale: new THREE.Vector3(10, 10, 10),
+            scale: new THREE.Vector3(20, 20, 20),
             position: new THREE.Vector3(1300, 230, 0),
+            color: 0x660000,
           });
-          /* const bird = await map1.addGLB2({
-            urlOBJ: "./public/3dobj/flamingo.glb",
-            nameObject: "bird-01",
-            //color: 0x850000,
-            //urlMTL: "./public/3dobj/car-2.mtl",
-            durationAnimation: 1,
-            rotation: new THREE.Vector3(
-              degToRad(0),
-              degToRad(90),
-              degToRad(180)
-            ),
-            scale: new THREE.Vector3(0.4, 0.4, 0.4),
-            position: new THREE.Vector3(1300, 230, 50),
-          }); */
+          map1.setMaterialsParams(car1, {
+            color: 0x006655,
+            opacity: 0.7,
+            transparent: true,
+          });
 
           const boxMesh = map1.addBox({
             nameBox: "box-3521",
@@ -598,30 +743,49 @@ export async function testmylib(): Promise<boolean> {
             new THREE.Vector3(1800, 1100, 70),
             new THREE.Vector3(1440, 980, 50),
           ];
-          /* map1.addObjectToAnimate(
-            "carmovie",
-            car1,
-            map1.createPath(pathM),
-            0,
-            40
-          ); */
+          const findWC2A = map1.getPositionSVGObject("wc-1-1");
+          const pathM5 = [
+            new THREE.Vector3(findWC2A?.x, findWC2A?.y, 6),
+            new THREE.Vector3(findWC2A?.x, findWC2A?.y, 10),
+            new THREE.Vector3(findWC2A?.x, findWC2A?.y, 50),
+            new THREE.Vector3(findWC2A?.x, findWC2A?.y, 6),
+          ];
+          const pathM6 = [
+            new THREE.Vector3(findWC2?.x, findWC2?.y, 6),
+            new THREE.Vector3(findWC2?.x, findWC2?.y, 10),
+            new THREE.Vector3(findWC2?.x, findWC2?.y, 50),
+            new THREE.Vector3(findWC2?.x, findWC2?.y, 6),
+          ];
+
           map1.addObjectToAnimate({
             isPathAnimation: true,
             namePath: "carmovie",
             object: boxMesh,
-            path: map1.createPath(pathM4),
+            path: map1.createAnimationPath(pathM4),
             t: 0,
-            //tt: 0,
-            duration: 5,
-            /* opacitySteps: {
-              timeStart: 0.5,
-              timeEnd: 0.5,
-            }, */
+            duration: 18,
           });
           map1.addObjectToAnimate({
+            isOpacityAnimation: false,
+            isPathAnimation: true,
+            namePath: "signmovie",
+            object: signPoint2,
+            path: map1.createAnimationPath(pathM5),
+            t: 0,
+            duration: 2,
+          });
+          map1.addObjectToAnimate({
+            isOpacityAnimation: false,
+            isPathAnimation: true,
+            namePath: "signmovie1",
+            object: signPoint,
+            path: map1.createAnimationPath(pathM6),
+            t: 0,
+            duration: 2,
+          });
+          /* map1.addObjectToAnimate({
             isOpacityAnimation: true,
-            namePath: "carmovie2",
-            object: boxSign,
+            object: signPoint2,
             t: 0,
             tt: 0,
             duration: 3,
@@ -630,6 +794,18 @@ export async function testmylib(): Promise<boolean> {
               timeEnd: 0.5,
             },
           });
+          map1.addObjectToAnimate({
+            isOpacityAnimation: true,
+            namePath: "sign-point-animation",
+            object: signPoint,
+            t: 0,
+            tt: 0,
+            duration: 3,
+            opacitySteps: {
+              timeStart: 0.5,
+              timeEnd: 0.5,
+            },
+          }); */
 
           map1.addClone({
             meshSource: car1,
@@ -699,6 +875,34 @@ export async function testmylib(): Promise<boolean> {
           await map1.runLoadSVG();
           addWall(map1, "floor-2");
           addFloor(map1, "floor-2");
+          const objAtmf2 = map1.addBox({
+            nameBox: "sign-2",
+            //urlSignImage: "./public/i-atm.png",
+            width: 2000,
+            height: 4300,
+            depth: 0,
+            position: new THREE.Vector3(1300, 600, 0),
+            rotation: new THREE.Vector3(0, Math.PI / 1, 0),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x999999,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.4,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: true,
+            },
+          });
+          map1.setImageTexture(
+            "./public/textures/grand-map-2.png",
+            "./public/textures/alpha_texture.jpg",
+            objAtmf2
+          );
           const liftf2 = await map1.addGLB2({
             urlOBJ: "./public/3dobj/lift-bl2.glb",
             nameObject: "lift-1",
@@ -773,6 +977,49 @@ export async function testmylib(): Promise<boolean> {
             position: new THREE.Vector3(1600, 230, 0),
           });
           console.log("SELECT MAP 2 =>> ", map1);
+          const findWC12 = map1.getPositionSVGObject("wc-1-1");
+
+          console.log("START MAP startS findElement findWC12 =>> ", findWC12);
+          const signPoint22 = await map1.addGLB2({
+            urlOBJ: "./public/3dobj/signPoint.glb",
+            nameObject: "sign-point",
+            rotation: new THREE.Vector3(degToRad(90), degToRad(0), degToRad(0)),
+            scale: new THREE.Vector3(10, 10, 10),
+            position: new THREE.Vector3(findWC12?.x, findWC12?.y, 36),
+            isVisible: false,
+          });
+          map1.addObjectToAnimate({
+            isOpacityAnimation: true,
+            namePath: "sign-point-animation",
+            object: signPoint22,
+            t: 0,
+            tt: 0,
+            duration: 3,
+            opacitySteps: {
+              timeStart: 0.5,
+              timeEnd: 0.5,
+            },
+          });
+          map1.setMaterialsParams(signPoint22, {
+            color: 0x9823ab,
+            opacity: 0.5,
+            transparent: true,
+          });
+          const findWC22 = map1.getPositionSVGObject("wc-1-2");
+          const signPoint222 = map1.addClone({
+            meshSource: signPoint22,
+            name: "sign-point-2",
+            duration: 6,
+            //position: new THREE.Vector3(880, 430, 10),
+            position: new THREE.Vector3(findWC22?.x, findWC22?.y, 30),
+          });
+          const signPoint32 = map1.addClone({
+            meshSource: signPoint22,
+            name: "sign-point-3",
+            duration: 6,
+            position: new THREE.Vector3(1720, 770, 30),
+          });
+
           break;
         case "floor-3":
           map1.clearAnimationArray();
@@ -786,6 +1033,34 @@ export async function testmylib(): Promise<boolean> {
           await map1.runLoadSVG();
           addWall(map1, "floor-3");
           addFloor(map1, "floor-3");
+          const objAtmf3 = map1.addBox({
+            nameBox: "sign-2",
+            //urlSignImage: "./public/i-atm.png",
+            width: 2000,
+            height: 4300,
+            depth: 0,
+            position: new THREE.Vector3(1300, 600, 0),
+            rotation: new THREE.Vector3(0, Math.PI / 1, 0),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x999999,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.4,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: true,
+            },
+          });
+          map1.setImageTexture(
+            "./public/textures/grand-map-2.png",
+            "./public/textures/alpha_texture.jpg",
+            objAtmf3
+          );
           addRoof(map1, "floor-3");
           break;
         case "floor-4":
@@ -800,6 +1075,33 @@ export async function testmylib(): Promise<boolean> {
           await map1.runLoadSVG();
           addWall(map1, "floor-4");
           addFloor(map1, "floor-4");
+          const objAtmf4 = map1.addBox({
+            nameBox: "sign-2",
+            width: 2000,
+            height: 4300,
+            depth: 0,
+            position: new THREE.Vector3(1300, 600, 0),
+            rotation: new THREE.Vector3(0, Math.PI / 1, 0),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x999999,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.4,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: true,
+            },
+          });
+          map1.setImageTexture(
+            "./public/textures/grand-map-2.png",
+            "./public/textures/alpha_texture.jpg",
+            objAtmf4
+          );
           addRoof(map1, "floor-4");
           break;
         case "floor-5":
@@ -814,6 +1116,33 @@ export async function testmylib(): Promise<boolean> {
           await map1.runLoadSVG();
           addWall(map1, "floor-5");
           addFloor(map1, "floor-5");
+          const objAtmf5 = map1.addBox({
+            nameBox: "sign-2",
+            width: 2000,
+            height: 4300,
+            depth: 0,
+            position: new THREE.Vector3(1300, 600, 0),
+            rotation: new THREE.Vector3(0, Math.PI / 1, 0),
+            scale: new THREE.Vector3(100.0, 100.0, 100.0),
+            material: new THREE.MeshPhongMaterial({
+              color: 0x999999,
+              specular: 0x666666,
+              emissive: 0x000000,
+              shininess: 6,
+              opacity: 0.4,
+              transparent: true,
+              wireframe: false,
+            }),
+            shadow: {
+              castShadow: false,
+              receiveShadow: true,
+            },
+          });
+          map1.setImageTexture(
+            "./public/textures/grand-map-2.png",
+            "./public/textures/alpha_texture.jpg",
+            objAtmf5
+          );
           addRoof(map1, "floor-5");
           break;
         case "floor-0":
@@ -1169,6 +1498,9 @@ export async function testmylib(): Promise<boolean> {
   function clearSelectObject(map: ClientSVG3D): void {
     map.clearSelectObject(map.options?.signsLayer?.substring(1) as string);
   }
+  function clearSelectShop(map: ClientSVG3D) {
+    map.clearColorActive();
+  }
   function degToRad(degrees: number): number {
     const radians = (degrees * Math.PI) / 180;
     return radians;
@@ -1178,6 +1510,12 @@ export async function testmylib(): Promise<boolean> {
     //const geturl = dataelement.getAttribute('data-url')
 
     window.open(dataelement.slug, "_self");
+  }
+  function getMouseCursor(event: any): void {
+    const x = event.clientX;
+    const y = event.clientY;
+    const coords = "X coords: " + x + ", Y coords: " + y;
+    console.log("getMouseCursor = ", coords);
   }
   return true;
 }

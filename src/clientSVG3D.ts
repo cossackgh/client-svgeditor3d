@@ -23,6 +23,9 @@ import type {
   SignOptions,
   CloneObject,
   AnimationOptions,
+  OptionsMaterial,
+  AnimationData,
+  OrbitControlsParam,
 } from "./models/simple.models";
 //import { SvgMap } from './_privatemodule/svg'
 import Base from "./base";
@@ -57,7 +60,7 @@ import {
   ShapePath,
 } from "three";
 
-export class ClientSVG3D extends Base {
+export class ClientSVG3D {
   node: HTMLElement;
   dataItems: DataInteractive[] = [];
   options: DataOptions = {
@@ -134,6 +137,7 @@ export class ClientSVG3D extends Base {
   static effect: OutlineEffect | null;
   static isAnimate: boolean;
   static arrayPathsAnimation: AnimationOptions[] = [];
+  static arrayDataAnimation: AnimationData[] = [];
   static duration = 60;
   static t = 0;
   static tt = 0;
@@ -142,6 +146,7 @@ export class ClientSVG3D extends Base {
     if (ClientSVG3D.DEBUG) console.log("place to call");
     // throw new Error("Method not implemented.");
   }
+  static currentSVG: any;
   constructor(
     node: HTMLElement,
     dataItems: DataInteractive[],
@@ -149,7 +154,7 @@ export class ClientSVG3D extends Base {
     // isMobile: boolean,
     balloonTheme: BalloonTheme
   ) {
-    super();
+    //super();
     this.balloonTheme = balloonTheme;
     this.node = node;
     this.dataItems = dataItems;
@@ -229,6 +234,7 @@ export class ClientSVG3D extends Base {
         classOptions.urlmap,
         async (data: { paths: ShapePath[] }) => {
           ClientSVG3D.parseSVGMap = data.paths;
+          if (ClientSVG3D.DEBUG) console.log("    ## LOAD data => ", data);
           if (ClientSVG3D.DEBUG)
             console.log("    ## LOAD All paths => ", ClientSVG3D.parseSVGMap);
 
@@ -260,7 +266,6 @@ export class ClientSVG3D extends Base {
   changeSceneBG(color: string): void {
     ClientSVG3D.scene!.background = new THREE.Color(color);
   }
-
   async init(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       ClientSVG3D.activeColor = this.options.activeColor;
@@ -437,16 +442,16 @@ export class ClientSVG3D extends Base {
     );
     ClientSVG3D.spotlight.name = optionsSpotLight?.name ?? "SpotLight";
     ClientSVG3D.spotlight.position.set(20, 200, 1800);
-    ClientSVG3D.spotlight.angle = -Math.PI * 0.3;
-    ClientSVG3D.spotlight.castShadow = true;
+    ClientSVG3D.spotlight.angle = optionsSpotLight?.angle?? -Math.PI * 0.3;
+    ClientSVG3D.spotlight.castShadow =optionsSpotLight?.castShadow ?? true;
     //light.penumbra = 0.3;
-    ClientSVG3D.spotlight.shadow.camera.near = 30;
-    ClientSVG3D.spotlight.shadow.camera.far = 200000;
+    ClientSVG3D.spotlight.shadow.camera.near = optionsSpotLight?.shadow?.camera?.near ?? 30;
+    ClientSVG3D.spotlight.shadow.camera.far = optionsSpotLight?.shadow?.camera?.far ?? 200000;
     //ClientSVG3D.spotlight.shadow.bias = 0.000222;
-    ClientSVG3D.spotlight.shadow.bias = 0.0;
-    ClientSVG3D.spotlight.shadow.mapSize.width = 2048;
-    ClientSVG3D.spotlight.shadow.mapSize.height = 2048;
-    ClientSVG3D.spotlight.shadow.radius = 2.8;
+    ClientSVG3D.spotlight.shadow.bias = optionsSpotLight?.shadow?.bias ?? 0.0;
+    ClientSVG3D.spotlight.shadow.mapSize.width = optionsSpotLight?.shadow?.mapSize?.width ?? 2048;
+    ClientSVG3D.spotlight.shadow.mapSize.height = optionsSpotLight?.shadow?.mapSize?.height ?? 2048;
+    ClientSVG3D.spotlight.shadow.radius = optionsSpotLight?.shadow?.radius ?? 2.8;
     ClientSVG3D.scene?.add(targetObject);
     targetObject.position.set(-60, -100, -300);
     ClientSVG3D.spotlight.target = targetObject;
@@ -496,6 +501,74 @@ export class ClientSVG3D extends Base {
     axesHelper.name = "axesHelper";
     ClientSVG3D.scene?.add(axesHelper);
   }
+  addControlsNew(options:OrbitControlsParam): void {
+    /* {
+      isZoom = true,
+      isPan = true,
+      isRotate = true,
+      minPolarAngle = Math.PI / 2,
+      maxPolarAngle = Math.PI / 1.4,
+      minDistance = 0,
+      maxDistance = 10000,
+      maxOrbitPanX = 300,
+      maxOrbitPanY = 300,
+      minOrbitPanX = -300,
+      minOrbitPanY = -300,
+      target: THREE.Vector3,
+      isUnmountEvent = false,
+    }  */
+    
+    ClientSVG3D.camera?.updateProjectionMatrix();
+    const controls = new OrbitControls(
+      ClientSVG3D.camera,
+      ClientSVG3D.renderer?.domElement
+    );
+    const minPan = new THREE.Vector3(options.minOrbitPanX, options.minOrbitPanY, 0);
+    const maxPan = new THREE.Vector3(options.maxOrbitPanX, options.maxOrbitPanY, 0);
+    const _v = new THREE.Vector3();
+    
+    if(!options.isUnmountEvent){
+      console.log("#################################################################isUnmountEvent");
+      //controls.screenSpacePanning = false;
+      controls.addEventListener("change", changeControl);
+      controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+      controls.dampingFactor = 0.05;
+
+      controls.enablePan = options.isPan;
+      controls.enableZoom = options.isZoom;
+      controls.enableRotate = options.isRotate;
+      controls.screenSpacePanning = true;
+      controls.zoomSpeed = 0.5;
+
+      controls.minDistance = options.minDistance;
+      controls.maxDistance = options.maxDistance;
+
+      controls.minPolarAngle = options.minPolarAngle;
+      controls.maxPolarAngle = options.maxPolarAngle;
+      controls.maxAzimuthAngle = Math.PI;
+      controls.target = options.target;
+      controls.update();
+      
+      controls.reset();
+    }else{
+      console.log("###### Remove isUnmountEvent");
+      controls.reset();
+      controls.removeEventListener("change", changeControl); 
+    }
+    function changeControl() {
+      if (ClientSVG3D.DEBUG) console.log("changeControl");
+      if (ClientSVG3D.DEBUG) console.log("changeControl control target 1", options.target);
+      if (ClientSVG3D.DEBUG) console.log("changeControl control target", controls.target);
+      if (ClientSVG3D.DEBUG) console.log("changeControl cam pos", ClientSVG3D.camera?.position);
+      if (ClientSVG3D.DEBUG) console.log("changeControl v", _v);
+      ClientSVG3D.renderer?.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
+      _v.copy(controls.target);
+      controls?.target.clamp(minPan, maxPan);
+      _v.sub(controls.target);
+      ClientSVG3D.camera?.position.sub(_v);
+    }
+    
+  }
   addControls({
     isZoom = true,
     isPan = true,
@@ -509,41 +582,56 @@ export class ClientSVG3D extends Base {
     minOrbitPanX = -300,
     minOrbitPanY = -300,
     target = new THREE.Vector3(0, 0, 0),
+    isUnmountEvent = false,
   }): void {
     ClientSVG3D.controls = new OrbitControls(
-      ClientSVG3D.camera!,
+      ClientSVG3D.camera,
       ClientSVG3D.renderer?.domElement
     );
     const minPan = new THREE.Vector3(minOrbitPanX, minOrbitPanY, 0);
     const maxPan = new THREE.Vector3(maxOrbitPanX, maxOrbitPanY, 0);
     const _v = new THREE.Vector3();
-    ClientSVG3D.controls.addEventListener("change", () => {
-      if (ClientSVG3D.DEBUG) console.log("renderEventControl");
+    
+    if(!isUnmountEvent){
+      console.log("#################################################################isUnmountEvent");
+      //ClientSVG3D.controls.screenSpacePanning = false;
+      ClientSVG3D.controls.addEventListener("change", changeControl);
+      ClientSVG3D.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+      ClientSVG3D.controls.dampingFactor = 0.05;
+
+      ClientSVG3D.controls.enablePan = isPan;
+      ClientSVG3D.controls.enableZoom = isZoom;
+      ClientSVG3D.controls.enableRotate = isRotate;
+      ClientSVG3D.controls.screenSpacePanning = true;
+      ClientSVG3D.controls.zoomSpeed = 0.5;
+
+      ClientSVG3D.controls.minDistance = minDistance;
+      ClientSVG3D.controls.maxDistance = maxDistance;
+
+      ClientSVG3D.controls.minPolarAngle = minPolarAngle;
+      ClientSVG3D.controls.maxPolarAngle = maxPolarAngle;
+      ClientSVG3D.controls.maxAzimuthAngle = Math.PI;
+      ClientSVG3D.controls.target = target;
+      ClientSVG3D.controls.update();
+      
+      ClientSVG3D.controls.reset();
+    }else{
+      console.log("###### Remove isUnmountEvent");
+      ClientSVG3D.controls.reset();
+      ClientSVG3D.controls.removeEventListener("change", changeControl); 
+    }
+    function changeControl() {
+      if (ClientSVG3D.DEBUG) console.log("changeControl");
+      if (ClientSVG3D.DEBUG) console.log("changeControl control target", ClientSVG3D.controls!.target);
+      if (ClientSVG3D.DEBUG) console.log("changeControl cam pos", ClientSVG3D.camera?.position);
+      if (ClientSVG3D.DEBUG) console.log("changeControl v", _v);
       ClientSVG3D.renderer?.render(ClientSVG3D.scene!, ClientSVG3D.camera!);
       _v.copy(ClientSVG3D.controls!.target);
       ClientSVG3D.controls?.target.clamp(minPan, maxPan);
       _v.sub(ClientSVG3D.controls!.target);
       ClientSVG3D.camera?.position.sub(_v);
-    });
-    //ClientSVG3D.controls.screenSpacePanning = false;
-    ClientSVG3D.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-    ClientSVG3D.controls.dampingFactor = 0.05;
-
-    ClientSVG3D.controls.enablePan = isPan;
-    ClientSVG3D.controls.enableZoom = isZoom;
-    ClientSVG3D.controls.enableRotate = isRotate;
-    ClientSVG3D.controls.screenSpacePanning = true;
-    ClientSVG3D.controls.zoomSpeed = 0.5;
-
-    ClientSVG3D.controls.minDistance = minDistance;
-    ClientSVG3D.controls.maxDistance = maxDistance;
-
-    ClientSVG3D.controls.minPolarAngle = minPolarAngle;
-    ClientSVG3D.controls.maxPolarAngle = maxPolarAngle;
-    ClientSVG3D.controls.maxAzimuthAngle = Math.PI;
-    ClientSVG3D.controls.target = target;
-    ClientSVG3D.controls.update();
-    //ClientSVG3D.controls.reset();
+    }
+    
   }
   addCylider(cylparams: CylinderParams): THREE.Mesh {
     const geometry = new THREE.CylinderGeometry(
@@ -611,14 +699,25 @@ export class ClientSVG3D extends Base {
     groupBox?.add(cube);
     ClientSVG3D.rootMap?.add(groupBox!);
     if (ClientSVG3D.DEBUG) console.log(" ### ==== #### addBox cube = > ", cube);
-    function materialWithTexture(
-      material: THREE.MeshPhongMaterial,
-      texture: THREE.Texture
-    ): THREE.MeshPhongMaterial {
-      material.map = texture;
-      return material;
-    }
     return cube;
+  }
+  setImageTexture(
+    urlTexture: string,
+    urlAlpha: string | undefined,
+    mesh:
+      | THREE.Mesh
+      | THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>
+  ): void {
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load(urlTexture);
+    const material = mesh.material as THREE.MeshPhongMaterial;
+    //const material = new THREE.MeshBasicMaterial({ map: texture });
+    material.map = texture;
+    if (urlAlpha !== undefined) {
+      const alphaTexture = textureLoader.load(urlAlpha);
+      material.alphaMap = alphaTexture;
+      material.transparent = true;
+    }
   }
   addBoxSign(boxparams: BoxParams): THREE.Mesh {
     const geometry = new THREE.BoxGeometry(
@@ -851,7 +950,7 @@ export class ClientSVG3D extends Base {
     if (ClientSVG3D.DEBUG) console.log("findObjectByName", object);
     return object;
   }
-  addClone(options: CloneObject): void {
+  addClone(options: CloneObject): THREE.Object3D | THREE.Mesh | THREE.Group {
     if (ClientSVG3D.DEBUG) console.log("addClone mesh =", options.meshSource);
     const mesh = options.meshSource.clone();
     mesh.name = options.name ?? "clone - " + Math.random() * 1000;
@@ -884,7 +983,7 @@ export class ClientSVG3D extends Base {
     mesh.scale.z = options.scale?.z ?? mesh.scale.z;
     ClientSVG3D.groupObjects?.add(mesh);
     ClientSVG3D.rootMap?.add(ClientSVG3D.groupObjects!);
-    //morphs.push(mesh);
+    return mesh;
   }
   async addGLB2(options: LoadObject): Promise<any> {
     return new Promise<any>((resolve, reject) => {
@@ -941,6 +1040,9 @@ export class ClientSVG3D extends Base {
                 ClientSVG3D.mixers
               );
           }
+          if (!options.isVisible && options.isVisible !== undefined) {
+            newObject.visible = false;
+          }
           resolve(newObject);
         } else {
           model.position.x = options.position?.x;
@@ -967,6 +1069,14 @@ export class ClientSVG3D extends Base {
             mixerAnim = new THREE.AnimationMixer(model);
             mixerAnim.clipAction(gltf.animations[0]).setDuration(6).play();
             ClientSVG3D.mixers?.push(mixerAnim);
+          }
+          if (ClientSVG3D.DEBUG)
+            console.log(
+              " ### ==== #### addGLB2 meshes options.color = > ",
+              options.color
+            );
+          if (!options.isVisible && options.isVisible !== undefined) {
+            model.visible = false;
           }
           resolve(model);
         }
@@ -1861,9 +1971,8 @@ export class ClientSVG3D extends Base {
         group?.children.forEach((child) => {
           if (child.name === id) {
             if (ClientSVG3D.DEBUG) console.log("selectItem child => ", child);
-            if (child instanceof THREE.Mesh) {
+            if (child instanceof THREE.Mesh || child instanceof THREE.Group || child instanceof THREE.Object3D) {
               child.visible = true;
-              //#ClientSVG3D.render();
             }
           }
         });
@@ -1874,16 +1983,14 @@ export class ClientSVG3D extends Base {
       group?.children.forEach((child) => {
         if (child.name !== item && isClear) {
           if (ClientSVG3D.DEBUG) console.log("selectItem child => ", child);
-          if (child instanceof THREE.Mesh) {
+          if (child instanceof THREE.Mesh || child instanceof THREE.Group || child instanceof THREE.Object3D) {
             child.visible = false;
-            //#ClientSVG3D.render();
           }
         }
       });
       if (mesh) {
         mesh.visible = true;
         if (ClientSVG3D.DEBUG) console.log("mesh => ", mesh);
-        //#ClientSVG3D.render();
       }
     }
   }
@@ -1983,6 +2090,7 @@ export class ClientSVG3D extends Base {
         if (ClientSVG3D.DEBUG)
           console.log("intersects = ", intersects[0].object.name);
         ClientSVG3D._someeventHandler(intersects[0].object.name);
+        ClientSVG3D._showBalloonEventHandler(true);
         ClientSVG3D.hoverCurrentItem = intersects[0];
         intersects[0].object.scale.z = 2.9;
         /*ClientSVG3D.outlinePass.selectedObjects = intersects[0].object;
@@ -2024,6 +2132,7 @@ export class ClientSVG3D extends Base {
           ClientSVG3D.INTERSECTED = intersects[0].object;
           if (ClientSVG3D.DEBUG)
             console.log("MOUSE OVER", intersects[0].object.name);
+          ClientSVG3D._showBalloonEventHandler(false);
           const groupActive = ClientSVG3D.scene?.getObjectByName("active");
           groupActive?.children.forEach((element) => {
             if (element instanceof THREE.Mesh) {
@@ -2066,13 +2175,18 @@ export class ClientSVG3D extends Base {
         });
         element.scale.z = 1;
       }); */
-
+        ClientSVG3D._showBalloonEventHandler(false);
         ClientSVG3D.INTERSECTED = null;
       }
     }
   }
 
   static _someeventHandler(e: any) {
+    console.log("some event happened");
+    return e;
+    //throw new Error("Method not implemented.");
+  }
+  static _showBalloonEventHandler(e: any) {
     console.log("some event happened");
     return e;
     //throw new Error("Method not implemented.");
@@ -2085,7 +2199,7 @@ export class ClientSVG3D extends Base {
     const groupActive = ClientSVG3D.scene?.getObjectByName("active");
     //if (ClientSVG3D.DEBUG) console.log("defaultColorActive ", groupActive?.children);
     if (ClientSVG3D.DEBUG)
-      console.log("ClientSVG3D.unactiveColor ", ClientSVG3D.unactiveColor);
+      //console.log("ClientSVG3D.unactiveColor ", ClientSVG3D.unactiveColor);
     groupActive?.children.forEach((element) => {
       if (element instanceof THREE.Mesh) {
         element.material.color = new THREE.Color(ClientSVG3D.unactiveColor);
@@ -2244,7 +2358,48 @@ export class ClientSVG3D extends Base {
     const getSVGData = await loadSVGFile(urlSVG);
     // if (ClientSVG3D.DEBUG) console.log("getSVGData = ", getSVGData);
   }
+  getPositionSVGObject(idElement: string) {
+    const getElement: any = ClientSVG3D.parseSVGMap.find((element: any) => {
+    if (ClientSVG3D.DEBUG)  console.log("getElement = ", element.userData.node.nodeName);
+    if (ClientSVG3D.DEBUG)   console.log("getElement = ", element.userData);
+      return element.userData.node.id === idElement;
+    });
+    switch (getElement.userData.node.nodeName) {
+      case "circle":
+        return {
+          element: "circle",
+          x: getElement.userData.node.cx.baseVal.value,
+          y: getElement.userData.node.cy.baseVal.value,
+        };
+      case "rect":
+        return {
+          element: "rect",
+          x: getElement.userData.node.x.baseVal.value,
+          y: getElement.userData.node.y.baseVal.value,
+          width: getElement.userData.node.width.baseVal.value,
+          height: getElement.userData.node.height.baseVal.value,
+        };
+      /* case "path":
+        return {
+          element: "path",
+          boundingBox: getElement.userData.node.getBBox(),
+        }; */
+
+      default:
+        break;
+    }
+  }
+ startAnimation() {
+    ClientSVG3D.animate(true);
+  }
+
   disposeTHREE() {
+    this.node.removeEventListener(
+      "mousemove",
+      ClientSVG3D.onDocumentMouseMove,
+      false
+    );
+    
     this.clearThree(ClientSVG3D.scene);
     ClientSVG3D.scene = null;
     ClientSVG3D.camera = null;
@@ -2252,14 +2407,20 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.controls = null;
     ClientSVG3D.raycaster = null;
     ClientSVG3D.INTERSECTED = null;
-    ClientSVG3D.clock = null;
-    ClientSVG3D.mixer = null;
-    ClientSVG3D.effect = null;
+    this.addControls({isUnmountEvent: true});
+    //ClientSVG3D.clock = null;
+    //ClientSVG3D.mixer = null;
+    //ClientSVG3D.effect = null;
     /* ClientSVG3D.composer = null;
     ClientSVG3D.renderPass = null; */
     ClientSVG3D.outlinePass = null;
-    ClientSVG3D.scene = new THREE.Scene();
-    if (ClientSVG3D.DEBUG) console.log("disposeTHREE = ", ClientSVG3D.scene);
+    ClientSVG3D.arrayPathsAnimation = [];
+    ClientSVG3D.arrayDataAnimation = [];
+    //ClientSVG3D.scene = new THREE.Scene();
+    ClientSVG3D.animate(false);
+    delete this;
+    if (ClientSVG3D.DEBUG) console.log("disposeTHREE scene = ", ClientSVG3D.scene);
+    if (ClientSVG3D.DEBUG) console.log("disposeTHREE ClientSVG3D arrayDataAnimation = ", ClientSVG3D.arrayDataAnimation);
   }
   clearThree(obj: any) {
     while (obj.children.length > 0) {
@@ -2297,13 +2458,10 @@ export class ClientSVG3D extends Base {
     ClientSVG3D.renderer.render(ClientSVG3D.scene, ClientSVG3D.camera);
     if (ClientSVG3D.DEBUG) console.log("render");
   } */
-  animate(loop = false) {
-    //if (ClientSVG3D.DEBUG) console.log("animate");
-    /* if (ClientSVG3D.DEBUG)
-      console.log("ClientSVG3D.mixers = ", ClientSVG3D.mixers); */
-    const delta = ClientSVG3D.clock!.getDelta();
+  static animate(loop = false) {
+    const delta = ClientSVG3D.clock?.getDelta();
     if (ClientSVG3D.mixers !== undefined && ClientSVG3D.mixers.length > 0) {
-      for (const mixer of ClientSVG3D.mixers!) mixer.update(delta);
+      for (const mixer of ClientSVG3D.mixers!) mixer.update(delta as number);
     }
     if (loop) {
       requestAnimationFrame(() => this.animate(loop));
@@ -2311,13 +2469,40 @@ export class ClientSVG3D extends Base {
     //requestAnimationFrame(ClientSVG3D.animate);
     ClientSVG3D.controls?.update();
     ClientSVG3D.render();
-    if (ClientSVG3D.arrayPathsAnimation.length > 0) {
-      updateAnimation();
+
+    if (ClientSVG3D.arrayDataAnimation.length > 0) {
+      //if (ClientSVG3D.DEBUG) console.log("updateAnimation = ",ClientSVG3D.arrayPathsAnimation.length);
+      updateAnimationT();
     }
+    /* if (ClientSVG3D.arrayPathsAnimation.length > 0) {
+      //if (ClientSVG3D.DEBUG) console.log("updateAnimation = ",ClientSVG3D.arrayPathsAnimation.length);
+      updateAnimationT();
+    } */
+
   }
   addObjectToAnimate(options: AnimationOptions) {
     // Добавление объекта в массив анимируемых объектов
-    ClientSVG3D.arrayPathsAnimation.push({
+    if (ClientSVG3D.DEBUG) console.log("Object Animate  = ", options.object);
+    if (ClientSVG3D.DEBUG) console.log("options.path = ", options.path);
+    const arrayPosition = [];
+    for (let index = 0; index < options.duration!; index += 1 / 60) {
+      if (options.path !== undefined && options.path !== null && options.duration !== undefined && options.duration !== null) {
+        arrayPosition.push(
+          ClientSVG3D.calculatePosition(options.path, index, options.duration)
+        );
+      }
+      
+    }
+    if (ClientSVG3D.DEBUG) console.log("arrayPosition = ", arrayPosition);
+    ClientSVG3D.arrayDataAnimation.push({
+      nameAnimation: options.namePath ?? "Animation-" + Math.random(),
+      object: options.object,
+      position: arrayPosition as THREE.Vector3[],
+      t: options.t ?? 0,
+      duration: options.duration ?? 60,
+    });
+    if (ClientSVG3D.DEBUG) console.log("ClientSVG3D.arrayDataAnimation = ", ClientSVG3D.arrayDataAnimation);
+    /* ClientSVG3D.arrayPathsAnimation.push({
       isOpacityAnimation: options.isOpacityAnimation ?? false,
       isPathAnimation: options.isPathAnimation ?? false,
       namePath: options.namePath,
@@ -2327,13 +2512,36 @@ export class ClientSVG3D extends Base {
       tt: options.tt ?? 0,
       duration: options.duration ?? 60,
       opacitySteps: options.opacitySteps ?? { timeStart: 0, timeEnd: 0 },
-    });
-    if (ClientSVG3D.DEBUG) console.log("Object TYPE  = ", options.object);
+    }); */
+    /* if (options.object instanceof THREE.Mesh) {
+      ClientSVG3D.arrayPathsAnimation.push({
+        isOpacityAnimation: options.isOpacityAnimation ?? false,
+        isPathAnimation: options.isPathAnimation ?? false,
+        namePath: options.namePath,
+        object: options.object,
+        path: options.path,
+        t: options.t ?? 0,
+        tt: options.tt ?? 0,
+        duration: options.duration ?? 60,
+        opacitySteps: options.opacitySteps ?? { timeStart: 0, timeEnd: 0 },
+      });
+    } else {
+      options.object?.children.forEach((element: any) => {
+        ClientSVG3D.arrayPathsAnimation.push({
+          isOpacityAnimation: options.isOpacityAnimation ?? false,
+          isPathAnimation: options.isPathAnimation ?? false,
+          namePath: options.namePath,
+          object: element,
+          path: options.path,
+          t: options.t ?? 0,
+          tt: options.tt ?? 0,
+          duration: options.duration ?? 60,
+          opacitySteps: options.opacitySteps ?? { timeStart: 0, timeEnd: 0 },
+        });
+      });
+    } */
     if (ClientSVG3D.DEBUG)
       console.log("Object TYPE  = ", typeof options.object);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x99ffff,
-    });
   }
   static calculatePosition(
     path: THREE.Path | THREE.CatmullRomCurve3,
@@ -2342,6 +2550,19 @@ export class ClientSVG3D extends Base {
   ) {
     const point = path.getPointAt(t / duration);
     return point;
+  }
+  static calculateOpacity(
+    startOpacity: number,
+    endOpacity: number,
+    steps: number,
+  ) {
+    const arrayOpacity = [];
+    for (let index = 0; index < steps; index++) {
+      arrayOpacity.push(
+        startOpacity + (endOpacity - startOpacity) / steps
+      );
+    }
+    return arrayOpacity;
   }
   createPath(
     arrayPoints: THREE.Vector2[] | THREE.Vector3[]
@@ -2385,6 +2606,37 @@ export class ClientSVG3D extends Base {
       return path;
     }
   }
+  createAnimationPath(
+    arrayPoints: THREE.Vector2[] | THREE.Vector3[]
+  ): THREE.Path | THREE.CatmullRomCurve3 | any {
+    if (ClientSVG3D.DEBUG) console.log("arrayPoints[0] instanceof = ", arrayPoints[0] instanceof THREE.Vector3);
+    if (ClientSVG3D.DEBUG) console.log("arrayPoints[0] = ", arrayPoints[0]);
+    // Создание кривой Безье
+    let path: THREE.Path | THREE.CatmullRomCurve3;
+    if (arrayPoints[0] instanceof THREE.Vector2) {
+      path = new THREE.Path();
+      path.moveTo(arrayPoints[0].x, arrayPoints[0].y);
+      for (let i = 1; i < arrayPoints.length; i++) {
+        /* path.quadraticCurveTo(
+              arrayPoints[i].x + 20,
+              arrayPoints[i].y + 20,
+              arrayPoints[i].x + 10,
+              arrayPoints[i].y + 10
+            ); */
+        path.lineTo(arrayPoints[i].x, arrayPoints[i].y);
+      }
+      if (ClientSVG3D.DEBUG) console.log("path 2D = ", path);
+      return path;
+    }
+    else{
+      //if (arrayPoints[0] instanceof THREE.Vector3) {
+      path = new THREE.CatmullRomCurve3(arrayPoints as THREE.Vector3[]);
+      if (ClientSVG3D.DEBUG) console.log("path 3D = ", path);
+      return path;
+    //}
+    }
+    
+  }
   clearAnimationArray() {
     // Очистка массива анимируемых объектов
     ClientSVG3D.arrayPathsAnimation = [];
@@ -2398,11 +2650,89 @@ export class ClientSVG3D extends Base {
       console.log("Received data:", data);
     });
   }
-  get onsomeevent() {
+  get onselectitem() {
     return ClientSVG3D._someeventHandler;
   }
-  set onsomeevent(newVal) {
+  set onselectitem(newVal) {
     ClientSVG3D._someeventHandler = newVal;
+  }
+  get onshowballoon() {
+    return ClientSVG3D._showBalloonEventHandler;
+  }
+  set onshowballoon(newVal) {
+    ClientSVG3D._showBalloonEventHandler = newVal;
+  }
+  setMaterialsParams(
+    object: THREE.Object3D | THREE.Group,
+    params: OptionsMaterial
+  ) {
+    if (object instanceof THREE.Mesh) {
+      if (ClientSVG3D.DEBUG) console.log("object = ", object);
+      if (ClientSVG3D.DEBUG) console.log("params = ", params);
+      if (
+        object.material instanceof THREE.MeshPhongMaterial ||
+        object.material instanceof THREE.MeshStandardMaterial
+      ) {
+        const color = new THREE.Color(params.color);
+        if (ClientSVG3D.DEBUG)
+          console.log("new THREE.Color(params.color = ", params.color);
+        if (params.color !== undefined) {
+          object.material.color = color;
+        }
+        if (params.visible !== undefined) {
+          object.visible = params.visible;
+        }
+
+        //object.material.specular = new THREE.Color(params.specular);
+        //object.material.emissive = new THREE.Color(params.emissive);
+        //object.material.shininess = params.shininess as number;
+        object.material.opacity = params.opacity as number;
+        object.material.transparent = params.transparent as boolean;
+        /* object.material.wireframe = params.wireframe;
+        object.material.side = params.side;
+        object.material.depthWrite = params.depthWrite;
+        object.material.userData.outlineParameters = {
+          thickness: 0.001,
+          color: [54, 0, 0],
+          alpha: 0.8,
+          visible: true,
+          keepAlive: false,
+        }; */
+      }
+
+      // Обработка материала объекта Mesh здесь, например:
+      // var material = object.material;
+      // console.log(material);
+    }
+
+    if (object.children.length > 0) {
+      for (const child of object.children) {
+        this.setMaterialsParams(child, params); // Рекурсивный вызов для каждого ребенка
+      }
+    }
+  }
+  visibleObjects(objects: string[], visible: boolean) {
+    //if (object instanceof THREE.Mesh) {
+    if (ClientSVG3D.DEBUG) console.log("object = ", objects);
+    objects.forEach((item) => {
+      const object = ClientSVG3D.scene?.getObjectByName(item);
+      if (
+        object instanceof THREE.Mesh ||
+        object instanceof THREE.Group ||
+        object instanceof THREE.Object3D
+      ) {
+        if (ClientSVG3D.DEBUG) console.log("object item= ", object);
+
+        if (visible !== undefined) {
+          object.visible = visible;
+        }
+      }
+      /* if (object!.children.length > 0) {
+        for (const child of object!.children) {
+          this.visibleObjects([child.name], visible); // Рекурсивный вызов для каждого ребенка
+        }
+      } */
+    });
   }
 }
 
@@ -2432,11 +2762,34 @@ function calculateTangent(
   return tangent;
 }
 
+  function updateAnimationT() {
+    ClientSVG3D.arrayDataAnimation.forEach((item,dxi) => {
+      /* if (ClientSVG3D.DEBUG)
+        console.log("updateAnimation t = ", item.t," | Duretion =  ", item.duration); */
+        if (item.object === undefined) return;
+        if (item.position !== undefined)  {
+          if (item.stepPosition !== undefined)  {
+            item.stepPosition++; 
+            if(item.stepPosition >= item.position.length) item.stepPosition = 0;
+          } else {
+            item.stepPosition = 0;
+          }
+          if (ClientSVG3D.DEBUG)
+          //console.log(" Position Animation =  ", item.position[item.stepPosition]);
+          item.object!.position.x = item.position[item.stepPosition].x;
+          item.object!.position.y = item.position[item.stepPosition].y;
+          if (item.position[item.stepPosition] instanceof THREE.Vector3) {
+            item.object!.position.z = item.position[item.stepPosition].z;
+          }
+
+        }
+      });
+  }
 function updateAnimation() {
   // Вычисление позиции объекта на пути
-  //if (ClientSVG3D.DEBUG)
-  //  console.log("updateAnimation PATH = ", ClientSVG3D.arrayPathsAnimation);
-  ClientSVG3D.arrayPathsAnimation.forEach((item) => {
+  if (ClientSVG3D.DEBUG)
+    console.log("updateAnimation PATH = ", ClientSVG3D.arrayPathsAnimation);
+  ClientSVG3D.arrayPathsAnimation.forEach((item,dxi) => {
     //updateObjectPosition(item.object, item.path);
     if (item.object === undefined) return;
     if (item.isPathAnimation) {
@@ -2530,7 +2883,6 @@ function updateAnimation() {
     //if (ClientSVG3D.DEBUG) console.log("updateAnimation TIME  = ", item.t);
   });
 }
-// write function chek  mobile device
 
 const isMobile = () => {
   let check = false;
@@ -2547,3 +2899,5 @@ const isMobile = () => {
   })(navigator.userAgent || navigator.vendor);
   return check;
 };
+
+

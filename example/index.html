@@ -16,6 +16,32 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css"
     />
     <link rel="stylesheet" href="../src/style.css" />
+    <style>
+      .hide{
+        opacity: 0;
+      }
+      .balloonCursor{
+        width: 200px;
+        min-height: 60px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        background-color: #fff;
+        border: 1px solid #000;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        font-family: sans-serif;
+        color: #000;
+      }
+      .baloon__title{
+        font-size: 14px;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 10px;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
@@ -86,9 +112,11 @@
     </pre>
     <div class="button-block">
       <button id="clear" class="btn__map" > DISPOSE </button>
-      <button id="viewShop1" class="btn__map" > Shop 1</button>
-      <button id="viewShop2" class="btn__map" > Shop 2</button>
-      <button id="viewShop3" class="btn__map" > Shop 3</button>
+      <button id="viewShop1" class="btn__map" > View Shop 1</button>
+      <button id="viewShop2" class="btn__map" > View Shop 2</button>
+      <button id="viewShop3" class="btn__map" > View Shop 3</button>
+      <button id="viewSign1" class="btn__map" > View Sign 1</button>
+      <button id="viewSigns2" class="btn__map" > View Signs 2</button>
     </div>
     <div class="button-block">
       <button id="getMap1" class="btn__map_floor" > 1</button>
@@ -104,6 +132,8 @@
 
     </div>
     <div id="map3d" class="svgmap"></div>
+    <div class="divide-block"></div>
+    <div id="map3d2" class="svgmap"></div>
     <div class="divide-block"></div>
    <!--  <h1>Example map #2</h1>
     <h3>Width 100%. Size map svg is adaptive</h3>
@@ -178,6 +208,9 @@
  <video id="video2" loop crossOrigin="anonymous" muted autoplay playsinline style="display:none; width: 80%">
   <source src="./public/video/plan_animation.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
 </video>
+<div class="balloonCursor hide" id="baloon">
+  <span id="title-baloon" class="baloon__title"></span> 
+</div>
 
     <script type="module" src="./main.ts"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>

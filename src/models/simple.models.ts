@@ -140,6 +140,9 @@ export interface LoadObject {
   urlMTL?: string;
   urlOBJ: string;
   color?: string | number;
+  isVisible?: boolean;
+  transparent?: boolean;
+  opacity?: number;
   position?: THREE.Vector3;
   rotation?: THREE.Vector3;
   scale?: THREE.Vector3;
@@ -292,6 +295,15 @@ export interface OptionsCam {
   zoom?: number;
   position?: THREE.Vector3;
 }
+export interface OptionsMaterial {
+  color?: number | string;
+  shininess?: number;
+  specular?: THREE.Color;
+  emissive?: THREE.Color;
+  opacity?: number;
+  transparent?: boolean;
+  visible?: boolean;
+}
 export interface OptionsAmbientLight {
   name?: string;
   color?: THREE.ColorRepresentation | undefined;
@@ -393,6 +405,20 @@ export interface AnimationOptions {
   duration?: number;
   opacitySteps?: OpacityStep;
 }
+export interface AnimationData {
+  nameAnimation?: string;
+  object?: THREE.Object3D | THREE.Group | THREE.Mesh;
+  position?: THREE.Vector3[];
+  rotation?: THREE.Vector3[];
+  scale?: THREE.Vector3[];
+  opacity?: number[];
+  t?: number;
+  duration?: number;
+  stepPosition?: number;
+  stepRotation?: number;
+  stepScale?: number;
+  stepOpacity?: number;
+}
 export type OpacityStep = {
   timeStart: number;
   timeEnd: number;
@@ -419,4 +445,19 @@ export interface OptionsSpotLight {
         };
       }
     | undefined;
+}
+export type OrbitControlsParam = {
+    isZoom: boolean;
+    isPan: boolean;
+    isRotate: boolean;
+    minPolarAngle: number;
+    maxPolarAngle: number;
+    minDistance: number;
+    maxDistance: number;
+    maxOrbitPanX: number;
+    maxOrbitPanY: number;
+    minOrbitPanX: number;
+    minOrbitPanY: number;
+    target: THREE.Vector3;
+    isUnmountEvent: boolean;
 }
